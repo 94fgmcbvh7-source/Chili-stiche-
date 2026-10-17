@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Chili-Stiche</title>
+<meta name="apple-mobile-web-app-title" content="Chili-Stiche">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#7A1F14">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --felt:#7E2414; --felt-2:#5F1A0E; --felt-line:rgba(255,230,200,.18);
+  --on-felt:#FCEBD8; --on-felt-dim:rgba(252,235,216,.7);
+  --card:#FFF6E3; --card-edge:#E6D3B0; --ink:#2B1A12;
+  --saffron:#F0B43C; --leaf:#4F8A3C; --chili:#D8341C;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --felt:#45140B; --felt-2:#300C06; --card:#F2E6CC; --card-edge:#CDBB95;
+  }
+}
+:root[data-theme="dark"]{ --felt:#45140B; --felt-2:#300C06; --card:#F2E6CC; --card-edge:#CDBB95; }
+*,*::before,*::after{box-sizing:inherit}
+html{font-size:clamp(16px, 0.9vw + 10px, 22px);height:100%;scroll-padding-top:env(safe-area-inset-top,0px);background:var(--felt)}
+body{
+  margin:0;height:100%;color:var(--on-felt);
+  font-family:"Bricolage Grotesque",ui-rounded,system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:radial-gradient(120% 80% at 50% 45%, var(--felt) 0%, var(--felt-2) 100%);
+  -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none;
+}
+.app{height:100%;max-width:1100px;margin:0 auto;display:flex;flex-direction:column;padding:10px 14px 12px}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+h1{font-size:1.5rem;font-weight:800;margin:0;letter-spacing:-.02em}
+h1 span{color:var(--saffron)}
+.round{font-size:.9rem;color:var(--on-felt-dim)}
+button{font:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid var(--saffron);outline-offset:2px}
+
+.seats{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-top:.8rem}
+.seat{border:1px solid var(--felt-line);border-radius:14px;padding:8px 10px;transition:border-color .2s, background .2s}
+.seat.active{border-color:var(--saffron);background:rgba(240,180,60,.08)}
+.seat .name{font-weight:700;font-size:1.15rem;display:flex;justify-content:space-between;align-items:center}
+.seat .stats{font-size:1rem;color:var(--on-felt-dim);margin-top:2px}
+.backs{display:flex;margin-top:6px;height:22px}
+.back{width:15px;height:22px;border-radius:3px;background:repeating-linear-gradient(45deg,var(--saffron) 0 3px,#C98A1E 3px 6px);border:1px solid rgba(0,0,0,.25);margin-right:-5px}
+.pips{display:inline-flex;gap:3px}
+.pip{width:.65rem;height:.65rem;border-radius:50%;background:var(--felt-line)}
+.pip.on{background:var(--chili);box-shadow:0 0 0 1px #ffb39f inset}
+.dealer{font-size:.7rem;background:var(--saffron);color:var(--ink);border-radius:6px;padding:1px 5px;font-weight:600}
+
+.table{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:170px}
+.trick{display:grid;grid-template-columns:auto auto auto;grid-template-rows:auto auto;justify-content:center;column-gap:1.2rem;row-gap:0}
+.slot{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.95rem;color:var(--on-felt-dim)}
+.msg{margin-top:12px;font-size:1.2rem;text-align:center;min-height:1.5em;font-weight:600}
+
+.card{
+  width:4.4rem;height:6.3rem;border-radius:.6rem;background:var(--card);color:var(--ink);
+  border:1px solid var(--card-edge);box-shadow:0 2px 0 var(--card-edge),0 6px 14px rgba(0,0,0,.25);
+  display:flex;align-items:center;justify-content:center;position:relative;
+  font-size:2.3rem;font-weight:800;letter-spacing:-.03em;flex:none;
+}
+.card::before,.card::after{content:attr(data-v);position:absolute;font-size:.75rem;font-weight:700}
+.card::before{top:4px;left:6px}.card::after{bottom:4px;right:6px;transform:rotate(180deg)}
+.card.joker{background:#2B1A12;color:var(--saffron);border-color:var(--saffron);box-shadow:0 2px 0 #000,0 6px 14px rgba(0,0,0,.3)}
+.card.joker .jv{font-size:2.4rem;color:#fff}
+.card.joker small{position:absolute;bottom:7px;font-size:.7rem;font-weight:700;color:var(--saffron)}
+.trick .card{width:5.4rem;height:7.6rem;font-size:3.2rem}
+.trick .card.joker .jv{font-size:3.2rem}
+.card.win{outline:3px solid var(--saffron);outline-offset:3px}
+.played{animation:drop .25s ease-out}
+@keyframes drop{from{transform:translateY(-14px) scale(.92);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion: reduce){.played{animation:none}}
+
+.me{border-top:1px solid var(--felt-line);padding-top:10px}
+.me-head{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:1.15rem;gap:8px;flex-wrap:wrap}
+.me-head .stats{font-weight:400;color:var(--on-felt-dim);font-size:1rem}
+.controls{margin:10px 0;min-height:44px}
+.bids{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center}
+.bids .label{width:100%;font-size:1.05rem;color:var(--on-felt-dim);text-align:center}
+.bid{min-width:3rem;height:3rem;border-radius:12px;border:none;background:var(--card);color:var(--ink);font-weight:800;font-size:1.1rem}
+.bid:disabled{opacity:.25;text-decoration:line-through;cursor:not-allowed}
+.hint{font-size:1.05rem;color:var(--on-felt-dim);text-align:center}
+.hand{display:flex;gap:.6rem;overflow-x:auto;padding:2.2rem 2px 2rem;justify-content:safe center}
+.hand .card{cursor:default;transition:transform .15s}
+.hand.playable .card{cursor:pointer}
+.hand.playable .card:not(.open):not(.off):focus-visible{transform:translateY(-8px)}
+.hand:not(.playable) .card{filter:saturate(.7) brightness(.92)}
+
+.overlay{position:fixed;inset:0;background:rgba(20,6,2,.62);display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
+.overlay[hidden]{display:none}
+.panel{background:var(--card);color:var(--ink);border-radius:18px;padding:1.3rem;width:100%;max-width:26rem;max-height:100%;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.4)}
+.panel h2{margin:0 0 8px;font-size:1.4rem;letter-spacing:-.02em}
+.panel p{margin:6px 0;line-height:1.45}
+.panel table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.95rem}
+.panel th,.panel td{padding:6px 4px;text-align:right;border-bottom:1px solid var(--card-edge)}
+.panel th:first-child,.panel td:first-child{text-align:left}
+.panel th{font-weight:600;font-size:.8rem;color:#6b5240}
+.primary{width:100%;height:50px;border:none;border-radius:14px;background:var(--chili);color:#fff;font-weight:800;font-size:1.05rem;margin-top:12px}
+.secondary{height:44px;border-radius:12px;border:1px solid var(--card-edge);background:transparent;color:var(--ink);font-weight:600;padding:0 14px}
+.row{display:flex;gap:8px;align-items:center;margin-top:10px}
+select,input[type=number]{font:inherit;height:44px;border-radius:12px;border:1px solid var(--card-edge);background:#fff;color:var(--ink);padding:0 10px}
+input[type=number]{width:90px;font-weight:800;font-size:1.2rem;text-align:center}
+details{margin-top:12px;font-size:.92rem}
+summary{font-weight:600;cursor:pointer}
+details ul{padding-left:18px;margin:6px 0;line-height:1.45}
+.plus{color:var(--chili);font-weight:800}
+.card.sel{transform:translateY(-1.1rem);box-shadow:0 0 0 3px var(--saffron),0 10px 18px rgba(0,0,0,.35)}
+.seltag{position:absolute;top:-1.35rem;left:50%;transform:translateX(-50%);background:var(--saffron);color:var(--ink);font-size:.72rem;font-weight:800;border-radius:.4rem;padding:.1rem .4rem;white-space:nowrap}
+.pickbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.6rem}
+.pickbar .prompt{flex:1 1 100%;text-align:center}
+.card.got{box-shadow:0 0 0 3px #3FA7D6,0 2px 0 var(--card-edge),0 6px 14px rgba(0,0,0,.25)}
+.gotmark{position:absolute;top:-.6rem;left:-.5rem;background:#3FA7D6;color:#fff;font-size:.62rem;font-weight:800;letter-spacing:.04em;border-radius:.4rem;padding:.08rem .35rem;box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.card.got.sel{box-shadow:0 0 0 3px var(--saffron),0 10px 18px rgba(0,0,0,.35)}
+.jrow{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin:1rem 0 .4rem}
+.jbtn{width:5rem;height:5rem;border-radius:1rem;border:2px solid var(--card-edge);background:#fff;color:var(--ink);font-weight:800;font-size:1.9rem;flex:none}
+.jbtn.on{background:var(--saffron);border-color:#C98A1E}
+.jmid{display:flex;flex-direction:column;align-items:center;gap:.2rem;min-width:0}
+.jmid small{font-size:.8rem;color:#6b5240;font-weight:600}
+#jv{width:5.5rem;height:4.4rem;font-size:2.4rem;border-width:2px}
+#jokerOk:disabled{opacity:.45}
+.pickok{width:auto!important;margin-top:0!important;height:2.8rem!important;padding:0 1.2rem}
+.pickok:disabled{opacity:.45}
+.card .mark{position:absolute;top:-.55rem;right:-.55rem;width:1.5rem;height:1.5rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:800;letter-spacing:0;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.card .mark.pen{background:#fff}
+.card .mark.bon{background:#2F8F3A;color:#fff;font-size:.7rem}
+.mmark{position:absolute;top:-.25rem;right:-.25rem;width:.6rem;height:.6rem;border-radius:50%;border:1px solid #fff}
+.mmark.pen{background:var(--chili)}.mmark.bon{background:#2F8F3A}
+.mini{position:relative}
+.hdr-r{display:flex;align-items:center;gap:.6rem}
+.flag{background:rgba(0,0,0,.2);border:1px solid var(--felt-line);border-radius:.6rem;height:2.2rem;min-width:2.2rem;font-size:1rem;color:var(--on-felt)}
+.ord{position:absolute;top:-.45rem;left:-.45rem;width:1rem;height:1rem;border-radius:50%;background:#2B1A12;color:var(--saffron);font-size:.6rem;font-style:normal;font-weight:800;display:flex;align-items:center;justify-content:center}
+.lm,.lb{position:relative}
+.lb .ord{width:1.5rem;height:1.5rem;font-size:.9rem;top:-.6rem;left:-.6rem}
+#copyTa{width:100%;height:14rem;font:.75rem/1.3 ui-monospace,Menlo,monospace;border:1px solid var(--card-edge);border-radius:.5rem;padding:.5rem;margin:.5rem 0}
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:20}
+#fx[hidden]{display:none}
+.endpanel{text-align:center;max-width:32rem}
+.end-title{font-size:2.6rem;font-weight:800;letter-spacing:-.03em;color:var(--chili);line-height:1}
+.end-sub{font-size:1.2rem;font-weight:600;margin:.4rem 0 1rem}
+.podium{display:flex;justify-content:center;align-items:flex-end;gap:.6rem;margin:.5rem 0 1rem}
+.pod{display:flex;flex-direction:column;align-items:center;width:6.5rem}
+.pod-name{font-weight:800;font-size:1.1rem}
+.pod-pili{font-size:.85rem;color:#6b5240;margin-bottom:.3rem}
+.pod-block{width:100%;border-radius:.6rem .6rem 0 0;color:#fff;font-weight:800;font-size:1.6rem;display:flex;align-items:flex-start;justify-content:center;padding-top:.4rem}
+.pl1 .pod-block{height:6rem;background:linear-gradient(#F2C14E,#D99A1E)}
+.pl2 .pod-block{height:4.4rem;background:linear-gradient(#C9CED6,#9AA3AE)}
+.pl3 .pod-block{height:3.2rem;background:linear-gradient(#E0A070,#B8743F)}
+.hist{text-align:left;margin-top:.6rem}
+.histwrap{overflow-x:auto;max-height:14rem;overflow-y:auto}
+.endbtns.wait{margin-top:1rem;color:#6b5240;font-size:.95rem;min-height:3.2rem;display:flex;align-items:center;justify-content:center}
+.prevh{margin:1rem 0 0;font-size:1.05rem}
+.primary.danger{background:#8E1B10}
+.table{position:relative}
+.lastbox{position:absolute;top:.2rem;left:0;background:rgba(0,0,0,.18);border:1px solid var(--felt-line);border-radius:.8rem;padding:.4rem .6rem;color:var(--on-felt);display:flex;flex-direction:column;align-items:center;gap:.2rem;z-index:2}
+.lastbox[hidden]{display:none}
+.lt-h{font-size:.75rem;color:var(--on-felt-dim);font-weight:600}
+.lt-g{display:grid;grid-template-columns:auto auto auto;grid-template-rows:auto auto;column-gap:.3rem}
+.lt{display:flex;flex-direction:column;align-items:center;font-size:.6rem;color:var(--on-felt-dim)}
+.lt.s1{grid-column:1;grid-row:1}.lt.s2{grid-column:3;grid-row:1}.lt.s0{grid-column:2;grid-row:2;margin-top:-1rem}
+.lm,.lb{display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--ink);border:1px solid var(--card-edge);background:var(--card)}
+.lm{width:1.7rem;height:2.4rem;border-radius:.3rem;font-size:.8rem}
+.lb{width:4.4rem;height:6.2rem;border-radius:.6rem;font-size:2rem}
+.lm.j,.lb.j{background:#2B1A12;color:var(--saffron);border-color:var(--saffron)}
+.lm.j{font-size:.6rem}.lb.j{font-size:1.3rem}
+.lm.ph,.lb.ph{background:transparent;border:1px dashed var(--felt-line)}
+.lm.win,.lb.win{outline:2px solid var(--saffron);outline-offset:2px}
+.lt-g.big{justify-content:center;column-gap:1rem;margin:1rem 0}
+.panel .lt{color:#6b5240;font-size:.85rem}
+.panel .lt.s0{margin-top:-2.5rem}
+.intro{text-align:center;max-width:30rem}
+.intro-no{font-size:2.2rem;font-weight:800;letter-spacing:-.02em;color:var(--chili)}
+.intro-n{font-size:1.1rem;font-weight:600;color:#6b5240;margin-top:.2rem}
+.intro-t{font-size:1.3rem;line-height:1.45;margin:1rem 0 .5rem}
+@media (max-width:640px){.lastbox{position:static;align-self:flex-start;margin-bottom:.4rem;flex-direction:row}}
+.minus{color:#7FCB6A;font-weight:800}
+.panel .minus{color:var(--leaf)}
+.mission{margin-top:8px;padding:8px 12px;border-radius:12px;background:rgba(240,180,60,.14);border-left:4px solid var(--saffron);font-size:1rem;line-height:1.35}
+.mission[hidden]{display:none}
+.mission b{color:var(--saffron)}
+.mode{font-size:1rem;color:var(--on-felt-dim);margin-bottom:8px;min-height:1.2em}
+.mode.low{color:var(--saffron);font-weight:600}
+.minis{display:flex;gap:.7rem;margin-top:.4rem;min-height:2.6rem;flex-wrap:wrap;align-items:center}
+.grp{display:flex;gap:3px;flex-wrap:wrap}
+.mini{width:1.8rem;height:2.6rem;border-radius:.3rem;background:var(--card);color:var(--ink);font-size:.95rem;font-weight:800;display:flex;align-items:center;justify-content:center;border:1px solid var(--card-edge)}
+.mini.j{background:#2B1A12;color:var(--saffron);border-color:var(--saffron)}
+.mini.back{background:repeating-linear-gradient(45deg,var(--saffron) 0 3px,#C98A1E 3px 6px);border-color:rgba(0,0,0,.25)}
+.card.blind{background:repeating-linear-gradient(45deg,var(--saffron) 0 5px,#C98A1E 5px 10px);color:var(--ink);border-color:#C98A1E}
+.card.open{transform:translateY(-.9rem)}
+.card .tag{position:absolute;left:-2px;right:-2px;bottom:-1.55rem;height:1.3rem;border-radius:.35rem;background:#1E4F8A;color:#fff;font-size:.72rem;font-weight:700;letter-spacing:0;display:flex;align-items:center;justify-content:center;white-space:nowrap}
+.hand .card.off{opacity:.45;filter:saturate(.5)}
+.score{display:flex;align-items:baseline;gap:.5rem;margin:.15rem 0}
+.score .big{font-size:1.9rem;font-weight:800;letter-spacing:-.02em;color:var(--on-felt)}
+.score .sl{color:var(--saffron);margin:0 .15rem}
+.score .lbl{font-size:.8rem;color:var(--on-felt-dim)}
+.pipwrap{display:inline-flex;align-items:center;gap:.3rem}
+.slot.s1{grid-column:1;grid-row:1}.slot.s2{grid-column:3;grid-row:1}.slot.s0{grid-column:2;grid-row:2;margin-top:-3rem}
+.card.ph{background:transparent;border:2px dashed var(--felt-line);box-shadow:none}
+.card.ph::before,.card.ph::after{content:none}
+.choices{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.choices .label{width:100%;font-size:1.05rem;color:var(--on-felt-dim);text-align:center}
+.choice{height:3rem;border-radius:12px;border:none;background:var(--card);color:var(--ink);font-weight:600;padding:0 14px}
+.left{display:inline-block;margin-left:.4rem;font-size:.85rem;color:var(--on-felt-dim)}
+.prompt{font-size:1.05rem;color:var(--saffron);font-weight:600;text-align:center}
+
+/* ---------- Kompakte Ansicht für Handys (automatisch) ---------- */
+@media (max-width:640px), (max-height:560px){
+  html{font-size:14px}
+  .app{padding:6px 10px 8px}
+  h1{font-size:1.25rem}
+  .mission{margin-top:4px;padding:5px 9px;font-size:.85rem}
+  .seats{gap:.5rem;margin-top:.5rem}
+  .seat{padding:5px 8px;border-radius:10px}
+  .seat .name{font-size:1rem}
+  .score{gap:.35rem;margin:0}
+  .score .big{font-size:1.45rem}
+  .score .lbl{font-size:.68rem}
+  .seat .stats{font-size:.85rem}
+  .pip{width:.55rem;height:.55rem}
+  .minis{gap:.4rem;margin-top:.25rem;min-height:1.9rem}
+  .mini{width:1.3rem;height:1.85rem;font-size:.72rem;border-radius:.22rem}
+  .table{min-height:0;padding:.2rem 0}
+  .mode{font-size:.85rem;margin-bottom:.25rem}
+  .trick{column-gap:.6rem}
+  .trick .card{width:3.9rem;height:5.5rem;font-size:2.1rem}
+  .trick .card.joker .jv{font-size:2.1rem}
+  .slot{font-size:.8rem;gap:2px}
+  .slot.s0{margin-top:-1.6rem}
+  .msg{margin-top:.35rem;font-size:1rem}
+  .lastbox{padding:.25rem .5rem;gap:.4rem;margin-bottom:.25rem}
+  .lm{width:1.3rem;height:1.8rem;font-size:.68rem}
+  .lt.s0{margin-top:-.6rem}
+  .me{padding-top:6px}
+  .me-head{font-size:1rem}
+  .controls{margin:6px 0;min-height:2.6rem}
+  .bid{min-width:2.6rem;height:2.6rem;font-size:1rem}
+  .choice{height:2.6rem}
+  .card{width:3.4rem;height:4.9rem;font-size:1.75rem;border-radius:.5rem}
+  .card::before,.card::after{font-size:.6rem}
+  .card.joker .jv{font-size:1.8rem}
+  .hand{gap:.4rem;padding:.8rem 2px 1.5rem}
+  .card.open{transform:translateY(-.6rem)}
+  .card .tag{font-size:.58rem;height:1.05rem;bottom:-1.2rem}
+  .intro-no{font-size:1.8rem}
+  .intro-t{font-size:1.1rem}
+  .lb{width:3.6rem;height:5rem;font-size:1.6rem}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Chili<span>-</span>Stiche</h1>
+    <div class="hdr-r"><button class="flag" id="flagBtn" title="Seltsamen Zug markieren" aria-label="Seltsamen Zug markieren">❗</button><button class="flag" id="logBtn2" title="Protokoll kopieren" aria-label="Protokoll kopieren">📋</button><div class="round" id="round"></div></div>
+  </header>
+  <div class="mission" id="mission" hidden></div>
+  <section class="seats" id="seats"></section>
+  <section class="table">
+    <button class="lastbox" id="lastBox" hidden aria-label="Letzten Stich groß ansehen"></button>
+    <div class="mode" id="mode"></div>
+    <div class="trick" id="trick"></div>
+    <div class="msg" id="msg" aria-live="polite"></div>
+  </section>
+  <section class="me">
+    <div class="me-head"><span id="meName">Du</span><span class="stats" id="meStats"></span></div>
+    <div class="controls" id="controls"></div>
+    <div class="hand" id="hand"></div>
+  </section>
+</div>
+
+<div class="overlay" id="start">
+  <div class="panel">
+    <h2>Chili-Stiche</h2>
+    <p>Du gegen Rosa und Bruno. Sag an, wie viele Stiche du machst, und triff die Zahl genau.</p>
+    <div class="row">
+      <label for="size">Spielart</label>
+      <select id="size">
+        <option value="missions" selected>Mit Missionen</option>
+        <option value="neu">Testregeln</option>
+        <option value="r33">Nur Regel 33 (Offene Karten zuletzt)</option>
+        <option value="r34">Nur Regel 34 (2+2 Karten nach rechts)</option>
+        <option value="r35">Nur Regel 35 (2+2 Karten nach links)</option>
+        <option value="r36">Nur Regel 36 (Abwerfen, 4 Stiche)</option>
+        <option value="r37">Nur Regel 37 (Gerade oder ungerade)</option>
+        <option value="3">3 Karten</option><option value="4">4 Karten</option>
+        <option value="5">5 Karten</option><option value="6">6 Karten</option>
+        <option value="7">7 Karten</option><option value="8">8 Karten</option>
+        <option value="mix">Ohne Missionen, 3–8 Karten</option>
+      </select>
+    </div>
+    <details>
+      <summary>Regeln</summary>
+      <ul>
+        <li>55 Zahlenkarten (1–55) und ein Joker. Keine Farben.</li>
+        <li>Jeder sagt an, wie viele Stiche er macht. Wer zuletzt ansagt, darf die Summe nicht genau auf die Zahl der Stiche bringen.</li>
+        <li>Die höchste Karte gewinnt den Stich, der Gewinner spielt als Nächstes aus.</li>
+        <li>Den Joker spielst du mit einem frei gewählten Wert von 0 bis 56. Bei Gleichstand gewinnt die zuerst gespielte Karte.</li>
+        <li>Mit Missionen gilt in jeder Runde eine Sonderregel, sie steht oben über dem Tisch. Der Missionsstapel wird nur gemischt, wenn er leer ist, und läuft über mehrere Spiele weiter.</li>
+        <li>Jeder Stich Abweichung von der Ansage bringt einen Pili. Bei 6 Pilis endet das Spiel, wer die wenigsten hat, gewinnt.</li>
+      </ul>
+    </details>
+    <button class="primary" id="go">Spiel starten</button>
+    <button class="secondary" id="statsBtn" style="width:100%;margin-top:8px">🏆 Jahreswertung</button>
+    <button class="secondary" id="logBtn" style="width:100%;margin-top:8px">📋 Protokoll kopieren</button>
+  </div>
+</div>
+
+<div class="overlay" id="jokerBox" hidden>
+  <div class="panel">
+    <h2>Joker ausspielen</h2>
+    <p>Welchen Wert soll der Joker haben? Tippe 0 oder 56 an, oder trage einen Wert ein.</p>
+    <div class="jrow">
+      <button class="jbtn" data-jv="0" aria-label="Joker als 0">0</button>
+      <div class="jmid"><small>gewählt</small><input type="number" id="jv" min="0" max="56" placeholder="?" aria-label="Wert des Jokers"></div>
+      <button class="jbtn" data-jv="56" aria-label="Joker als 56">56</button>
+    </div>
+    <button class="primary" id="jokerOk">Joker spielen</button>
+    <button class="secondary" id="jokerCancel" style="width:100%;margin-top:8px">Andere Karte wählen</button>
+  </div>
+</div>
+
+<div class="overlay" id="intro" hidden>
+  <div class="panel intro" id="introPanel"></div>
+</div>
+
+<div class="overlay" id="lastOv" hidden>
+  <div class="panel" id="lastPanel"></div>
+</div>
+
+<div class="overlay" id="endOv" hidden>
+  <div class="panel endpanel" id="endPanel"></div>
+</div>
+
+<div class="overlay" id="statsOv" hidden>
+  <div class="panel" id="statsPanel"></div>
+</div>
+
+<canvas id="fx" hidden aria-hidden="true"></canvas>
+
+<div class="overlay" id="copyOv" hidden>
+  <div class="panel" id="copyPanel"></div>
+</div>
+
+<div class="overlay" id="result" hidden>
+  <div class="panel" id="resultPanel"></div>
+</div>
+
+<script>
+const NAMES=["Du","Rosa","Bruno"];
+const LIMIT=6;
+const M={
+ 18:{n:7,t:"7 Karten. Wer einen Stich gewinnt, bestimmt, ob beim nächsten Stich die höchste oder die niedrigste Karte gewinnt."},
+ 19:{n:3,t:"3 Karten. Nach der Ansage gibt jeder eine Karte nach links und eine nach rechts."},
+ 20:{n:3,t:"2+1 Karten. Die ersten 2 Karten sieht nur der Rest des Tisches. Nach der Ansage werden sie aufgedeckt und jeder bekommt eine dritte."},
+ 21:{n:6,t:"4+2 Karten. Ansage nach 4 Karten. Nach dem 1. und 2. Stich zieht jeder eine Karte nach."},
+ 22:{n:6,t:"3+3 Karten. Ansage nach 3 Karten, danach bekommt jeder 3 offene Karten."},
+ 23:{n:5,t:"5 Karten. Nach der Ansage legt jeder 2 Karten verdeckt ab und zieht 2 neue."},
+ 24:{n:6,t:"6 Karten. Bei den ersten 3 Stichen gewinnt die höchste Karte, bei den letzten 3 die niedrigste."},
+ 25:{n:6,t:"3+3 Karten. Die ersten 3 Karten liegen offen. Nach der Ansage bekommt jeder 3 verdeckte Karten."},
+ 26:{n:7,t:"7 Karten. Wer einen Stich gewinnt, bekommt für jede Karte von 1 bis 9 darin einen Pili abgezogen."},
+ 27:{n:7,t:"7 Karten. Nach jedem Stich gibt jeder eine Karte an den Nachbarn weiter. Die Richtung bestimmt, wer den Stich gewonnen hat."}
+};
+const CARDS=[
+ {r:1,n:3,x:1,dir:1},{r:1,n:4,x:2,dir:2},{r:1,n:6,x:2,dir:1},{r:1,n:5,x:3,dir:1},{r:1,n:7,x:3,dir:2},
+ {r:2,n:3,dir:2},{r:2,n:5,dir:1},
+ {r:3,n:4,ban:0},{r:3,n:5,ban:1},
+ {r:4,n:3},{r:4,n:6},
+ {r:5,n:1},{r:5,n:2},
+ {r:6,n:3},
+ {r:7,n:4},{r:7,n:6},
+ {r:8,n:4},{r:8,n:6},
+ {r:9,n:6},
+ {r:10,n:5},{r:10,n:6},
+ {r:11,n:4},{r:11,n:6},
+ {r:12,n:3},{r:12,n:5},
+ {r:13,n:4},{r:13,n:6},
+ {r:15,n:5},{r:15,n:7},
+ {r:16,n:5,nums:[3,4,5,6,7,8]},{r:16,n:6,nums:[33,34,35,36,37,38]},{r:16,n:7,nums:[47,48,49,50,51,52]},
+ {r:17,n:5},{r:17,n:7},
+ {r:28,n:6},{r:29,n:4},{r:30,n:6},{r:31,n:5},{r:32,n:7},{r:33,n:7},{r:34,n:5,x:2,dir:2},{r:35,n:5,x:2,dir:1},{r:36,n:4,deal:7},{r:37,n:6},
+ ...Object.keys(M).map(k=>({r:+k,n:M[k].n}))
+];
+// Regel 37: Ansage 0 = gerade, 1 = ungerade; daneben 2 Pilis
+function missOf(m,b,t){return m===37?(t%2===b?0:2):Math.abs(b-t)}
+function needOf(m,b,t){return m===37?(t%2===b?0:1):b-t}
+function bidTxt(b){return S&&S.mission===37&&b!=null?(b?"ungerade":"gerade"):b}
+const dirTxt=d=>d===1?"nach links (du an Rosa)":"nach rechts (du an Bruno)";
+function cardText(c){
+  switch(c.r){
+    case 1:return `${c.n} Karten. Nach den Ansagen gibt jeder ${c.x===1?"1 Karte":c.x+" Karten"} ${dirTxt(c.dir)}.`;
+    case 2:return `${c.n} Karten. Nach den Ansagen gibt jeder alle seine Karten ${dirTxt(c.dir)}.`;
+    case 3:return `${c.n} Karten. Die Ansage ${c.ban} ist für alle verboten.`;
+    case 4:return `${c.n} Karten. Wer seine Ansage genau trifft, gibt so viele Pilis zurück, wie er Stiche gemacht hat.`;
+    case 5:return `${c.n===1?"1 Karte":c.n+" Karten"} an der Stirn. Du siehst nur die Karten der anderen, aufgedeckt wird nach den Ansagen.`;
+    case 6:return `2+1 Karten. Nach den Ansagen zieht jeder eine Karte nach. Angesagt wird auf 3 Stiche.`;
+    case 7:return `${c.n} Karten. Nach den Ansagen legt jeder seine Karten offen hin.`;
+    case 8:return `${c.n} Karten. Bei jedem Stich spielen alle gleichzeitig.`;
+    case 9:return `${c.n} Karten. Alle Werte sind umgekehrt: 1 ist die stärkste, 55 die schwächste Karte.`;
+    case 10:return `${c.n} Karten. Du hast nur 3 Sekunden, um deine Karten anzusehen, dann wird angesagt.`;
+    case 11:return `${c.n} Karten. Wer den ersten oder den letzten Stich gewinnt, bekommt je 1 Pili Strafe.`;
+    case 12:return `${c.n} Karten. Du hast 5 Sekunden, dann liegen deine Karten verdeckt. Der Rest der Runde wird blind gespielt.`;
+    case 13:return `${c.n} Karten. Niemand darf die Ansage des Spielers vor ihm wiederholen.`;
+    case 15:return `${c.n} Karten. Jeder muss immer seine höchste oder seine niedrigste Karte spielen. Der Joker geht immer.`;
+    case 16:return `${c.n} Karten. Wer einen Stich gewinnt, bekommt für jede Karte von ${c.nums[0]} bis ${c.nums[c.nums.length-1]} darin 1 Pili Strafe.`;
+    case 17:return `${c.n} Karten. Wer einen Stich gewinnt, tauscht eine Karte mit einem Spieler seiner Wahl. Beide suchen ihre Karte selbst aus.`;
+    case 28:return `${c.n} Karten. Der erste Stich wird gespielt, bevor jemand ansagt. Danach wird angesagt, der erste Stich zählt mit.`;
+    case 29:return `${c.n} Karten. Alles oder nichts: Wer genau trifft, gibt 1 Pili zurück. Wer danebenliegt, bekommt die doppelte Abweichung.`;
+    case 30:return `${c.n} Karten. Wer einen Stich gewinnt, darf ihn einmal pro Runde einem Mitspieler schenken. Ausspielen darf trotzdem der Gewinner.`;
+    case 31:return `${c.n} Karten. Null lohnt sich: Wer 0 ansagt und keinen Stich macht, gibt 1 Pili zurück.`;
+    case 37:return `${c.n} Karten. Sag nur „gerade“ oder „ungerade“ an. Stimmt die Sorte deiner Stiche, bekommst du 0 Pilis, sonst 2. Null Stiche zählen als gerade.`;
+    case 36:return `7 Karten, 4 Stiche. Nach jedem Stich (außer dem letzten) wirft jeder eine Karte verdeckt ab, sie zählt nicht mehr.`;
+    case 35:return `${c.n} Karten. Vor der Ansage gibt jeder 2 Karten nach links (du an Rosa). Nach der Ansage gibt jeder noch einmal 2 Karten nach links.`;
+    case 34:return `${c.n} Karten. Vor der Ansage gibt jeder 2 Karten nach rechts (du an Bruno). Nach der Ansage gibt jeder noch einmal 2 Karten nach rechts.`;
+    case 33:return `${c.n} Karten. Nach jedem Stich legt jeder eine Handkarte offen vor sich hin. Offene Karten darf man erst spielen, wenn die Hand leer ist.`;
+    case 32:return `${c.n} Karten. Stichkönig: Wer am Ende die meisten Stiche hat, bekommt 1 Pili Strafe, bei Gleichstand alle.`;
+    default:return M[c.r].t;
+  }
+}
+const DECKS={missions:{key:"chili-missionsstapel-v9",ok:c=>true},r37:{key:"chili-regel37-v1",ok:c=>c.r===37},r36:{key:"chili-regel36-v1",ok:c=>c.r===36},r34:{key:"chili-regel34-v1",ok:c=>c.r===34},r35:{key:"chili-regel35-v1",ok:c=>c.r===35},neu:{key:"chili-teststapel-v3",ok:c=>c.r>=28&&c.r<=33},r33:{key:"chili-regel33-v1",ok:c=>c.r===33}};
+function loadDeck(key){try{const d=JSON.parse(localStorage.getItem(key)||"[]");if(Array.isArray(d)&&d.every(i=>Number.isInteger(i)&&i>=0&&i<CARDS.length))return d}catch(e){}return []}
+function saveDeck(key,d){try{localStorage.setItem(key,JSON.stringify(d))}catch(e){}}
+function drawMission(which){
+  const D=DECKS[which];let d=loadDeck(D.key);
+  if(!d.length)d=shuffle(CARDS.map((c,i)=>D.ok(c)?i:-1).filter(i=>i>=0));
+  const idx=d.shift();saveDeck(D.key,d);S.left=d.length;
+  return CARDS[idx];
+}
+let S=null;
+const $=id=>document.getElementById(id);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+const isJ=c=>c==="J";
+const cv=o=>isJ(o.c)?99:o.c;
+function sortHand(h){return h.sort((a,b)=>cv(a)-cv(b))}
+function setMsg(t){$("msg").textContent=t}
+const verb=(i,du,er)=>i===0?du:er;
+
+/* ---------- Ablauf ---------- */
+async function newGame(){
+  while(true){
+    S={players:NAMES.map((n,i)=>({name:n,human:i===0,pilis:0,hand:[],bid:null,tricks:0,bonus:0})),
+       dealer:Math.floor(Math.random()*3),round:0,size:$("size").value,ui:null,trick:[],winIdx:-1,turn:-1,mode:"high",history:[],log:[]};
+    logEv({t:"spiel",start:new Date().toISOString(),spielart:S.size,geber:S.dealer});
+    $("start").hidden=true;
+    while(true){
+      await playRound();
+      const done=await showResult();
+      if(done)break;
+      S.dealer=(S.dealer+1)%3;
+    }
+    recordStats();
+    const choice=await showGameEnd();
+    if(choice!=="new")break;
+  }
+  $("start").hidden=false;
+}
+
+/* ---------- Spielprotokoll ---------- */
+const LOG_KEY="chili-protokoll-v1";
+const cardTxt=o=>(isJ(o.c)?"J":String(o.c))+(o.open?"o":"")+(o.blind?"b":"");
+function snapHands(){return S.players.map(p=>p.hand.map(cardTxt))}
+function logEv(ev){
+  if(!S||!S.log)return;
+  S.log.push(ev);
+  try{localStorage.setItem(LOG_KEY,JSON.stringify(S.log))}catch(e){}
+}
+function logSnap(why){logEv({t:"stand",why,r:S.round,stich:S.played,mode:S.mode,
+  ansage:S.players.map(p=>p.bid),stiche:S.players.map(p=>p.tricks),sonder:S.players.map(p=>p.bonus),hand:snapHands()})}
+function protocolText(){
+  let log=S&&S.log;
+  if(!log){try{log=JSON.parse(localStorage.getItem(LOG_KEY)||"null")}catch(e){}}
+  if(!log||!log.length)return null;
+  return "CHILI-PROTOKOLL v1\nSpieler: 0=Du 1=Rosa 2=Bruno, o=offen b=blind\n"+log.map(e=>JSON.stringify(e)).join("\n");
+}
+function copyProtocol(){
+  const txt=protocolText();
+  if(!txt){alertBox("Noch kein Spiel aufgezeichnet.");return}
+  const fallback=()=>{$("copyPanel").innerHTML=`<h2>Spielprotokoll</h2><p>Kopieren hat nicht geklappt. Markiere den Text unten und kopiere ihn, dann füge ihn im Chat ein.</p><textarea id="copyTa" readonly>${txt.replace(/</g,"&lt;")}</textarea><button class="primary" id="copyOk">Schließen</button>`;
+    $("copyOv").hidden=false;const ta=$("copyTa");ta.focus();ta.select();$("copyOk").onclick=()=>{$("copyOv").hidden=true}};
+  try{navigator.clipboard.writeText(txt).then(()=>alertBox("Protokoll kopiert! Füge es jetzt im Chat ein."),fallback)}catch(e){fallback()}
+}
+function alertBox(msg){$("copyPanel").innerHTML=`<h2>Spielprotokoll</h2><p>${msg}</p><button class="primary" id="copyOk">OK</button>`;$("copyOv").hidden=false;$("copyOk").onclick=()=>{$("copyOv").hidden=true}}
+function flagMove(){
+  if(!S||!S.log)return;
+  logSnap("SELTSAMER ZUG markiert");
+  logEv({t:"markierung",stichAufTisch:S.trick.map(x=>[x.i,isJ(x.card.c)?"J"+x.value:x.card.c])});
+  const old=$("msg").textContent;setMsg("Markiert! Diese Stelle steht jetzt im Protokoll.");
+  setTimeout(()=>{if($("msg").textContent.startsWith("Markiert"))setMsg(old)},2500);
+}
+
+/* ---------- Jahreswertung ---------- */
+const STATS_KEY="chili-jahreswertung-v1";
+const emptyYear=y=>({year:y,p:Object.fromEntries(NAMES.map(n=>[n,{games:0,wins:0,pilis:0}]))});
+/* Dauerhaft gespeichert beim Artefakt (db), Browserspeicher nur als Zwischenspeicher */
+let STATS=null,statsRef=null;
+const gamesOf=d=>d&&d.cur&&d.cur.p?Object.values(d.cur.p).reduce((a,r)=>a+(r.games||0),0)+(d.prev?1e4*d.prev.year:0)+1e6*d.cur.year:-1;
+function normStats(d){
+  const y=new Date().getFullYear();
+  d=d&&d.cur?JSON.parse(JSON.stringify(d)):{cur:emptyYear(y),prev:null};
+  NAMES.forEach(n=>{if(!d.cur.p[n])d.cur.p[n]={games:0,wins:0,pilis:0}});
+  if(d.cur.year!==y){d.prev=d.cur.year===y-1?d.cur:null;d.cur=emptyYear(y)}
+  return d;
+}
+function loadStats(){
+  if(!STATS){let d=null;try{d=JSON.parse(localStorage.getItem(STATS_KEY)||"null")}catch(e){}STATS=normStats(d)}
+  return normStats(STATS);
+}
+function saveStats(d){
+  STATS=normStats(d);
+  try{localStorage.setItem(STATS_KEY,JSON.stringify(STATS))}catch(e){}
+  if(statsRef)statsRef.set({cur:STATS.cur,prev:STATS.prev||null,saved:Date.now()}).catch(()=>{});
+}
+/* Gastversion: Jahreswertung nur im Browser */
+
+function winnersOf(){const min=Math.min(...S.players.map(p=>p.pilis));return S.players.filter(p=>p.pilis===min).map(p=>p.name)}
+function recordStats(){
+  const d=loadStats(),w=winnersOf();
+  S.players.forEach(p=>{const r=d.cur.p[p.name];r.games++;r.pilis+=p.pilis;if(w.includes(p.name))r.wins++});
+  saveStats(d);
+}
+function statsTable(y){
+  const rows=NAMES.map(n=>({n,...y.p[n]})).sort((a,b)=>b.wins-a.wins||(a.pilis/(a.games||1))-(b.pilis/(b.games||1)));
+  return `<table><tr><th>Spieler</th><th>Spiele</th><th>Siege</th><th>Pilis</th><th>Ø Pilis</th></tr>${rows.map(r=>`<tr><td>${r.n}</td><td>${r.games}</td><td>${r.wins}</td><td>${r.pilis}</td><td>${r.games?(r.pilis/r.games).toFixed(1).replace(".",","):"–"}</td></tr>`).join("")}</table>`;
+}
+function showStats(){
+  const d=loadStats();
+  const p=$("statsPanel");
+  const draw=(confirm)=>{
+    p.innerHTML=`<h2>Jahreswertung ${d.cur.year}</h2>${statsTable(d.cur)}${d.prev?`<h3 class="prevh">Vorjahr ${d.prev.year}</h3>${statsTable(d.prev)}`:""}
+      ${confirm?`<p><strong>Wirklich alles zurücksetzen?</strong> Die Wertung für ${d.cur.year} geht dabei verloren.</p><div class="row"><button class="secondary" id="stNo">Abbrechen</button><button class="primary danger" id="stYes" style="margin-top:0">Ja, zurücksetzen</button></div>`
+      :`<button class="primary" id="stClose">Schließen</button><button class="secondary" id="stReset" style="width:100%;margin-top:8px">Wertung zurücksetzen</button>`}`;
+    if(confirm){$("stNo").onclick=()=>draw(false);$("stYes").onclick=()=>{d.cur=emptyYear(d.cur.year);saveStats(d);draw(false)}}
+    else{$("stClose").onclick=()=>{$("statsOv").hidden=true};$("stReset").onclick=()=>draw(true)}
+  };
+  draw(false);$("statsOv").hidden=false;
+}
+
+/* ---------- Spielende ---------- */
+function showGameEnd(){
+  return new Promise(res=>{
+    const sorted=[...S.players].sort((a,b)=>a.pilis-b.pilis);
+    let place=0,last=null;
+    const places=sorted.map((p,k)=>{if(p.pilis!==last){place=k+1;last=p.pilis}return {p,place}});
+    const w=winnersOf(),iWin=w.includes("Du"),others=w.filter(n=>n!=="Du");
+    const title=iWin?(others.length?`Geteilter Sieg mit ${others.join(" und ")}!`:"Du gewinnst!"):`${w.join(" und ")} ${w.length>1?"gewinnen":"gewinnt"}. Revanche?`;
+    const order=[places[1],places[0],places[2]].filter(Boolean);
+    const podium=order.map(x=>`<div class="pod pl${x.place}"><div class="pod-name">${x.p.name}</div><div class="pod-pili">${x.p.pilis===1?"1 Pili":x.p.pilis+" Pilis"}</div><div class="pod-block">${x.place}.</div></div>`).join("");
+    const hist=S.history.map(h=>`<tr><td>${h.round}</td><td>${h.mission?"M "+h.mission:"–"}</td>${h.d.map(v=>`<td class="${v>0?"plus":v<0?"minus":""}">${v>0?"+"+v:v<0?"−"+(-v):"0"}</td>`).join("")}</tr>`).join("");
+    const d=loadStats();
+    $("endPanel").innerHTML=`<div class="end-title">Spielende!</div><p class="end-sub">${title}</p>
+      <div class="podium">${podium}</div>
+      <details class="hist"><summary>Spielverlauf (${S.history.length===1?"1 Runde":S.history.length+" Runden"})</summary><div class="histwrap"><table><tr><th>Runde</th><th>Mission</th>${NAMES.map(n=>`<th>${n}</th>`).join("")}</tr>${hist}</table></div></details>
+      <details class="hist"><summary>Jahreswertung ${d.cur.year}</summary>${statsTable(d.cur)}</details>
+      <div id="endBtns" class="endbtns wait"><span id="endWait">Einen Moment …</span></div>`;
+    $("endOv").hidden=false;
+    celebrate(iWin);
+    setTimeout(()=>{
+      $("endBtns").classList.remove("wait");
+      $("endBtns").innerHTML=`<button class="primary" id="endNew">Neues Spiel</button><button class="secondary" id="endMenu" style="width:100%;margin-top:8px">Zum Startmenü</button><button class="secondary" id="endLog" style="width:100%;margin-top:8px">📋 Protokoll kopieren</button>`;
+      $("endLog").onclick=copyProtocol;
+      const close=v=>{$("endOv").hidden=true;stopCelebrate();res(v)};
+      $("endNew").onclick=()=>close("new");$("endMenu").onclick=()=>close("menu");$("endNew").focus();
+    },3000);
+  });
+}
+let fxStop=null;
+function stopCelebrate(){if(fxStop){fxStop();fxStop=null}}
+function celebrate(win){
+  stopCelebrate();
+  if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const cv=$("fx");if(!cv||!cv.getContext)return;
+  const ctx=cv.getContext("2d"),D=devicePixelRatio||1;let W,H,raf,alive=true;
+  const size=()=>{W=cv.width=innerWidth*D;H=cv.height=innerHeight*D};size();
+  cv.hidden=false;const rockets=[],parts=[];const t0=performance.now();
+  const colors=["#3D8BFF","#3FD0A0","#7BE04A","#F2E04A","#F2A03A","#F05A3A","#FF6FD8","#FFFFFF"];
+  const pick=a=>a[Math.floor(Math.random()*a.length)];
+  let flash=0;
+  function launch(big){rockets.push({x:W*(.1+Math.random()*.8),y:H,vx:(Math.random()-.5)*2*D,vy:-(H/70+Math.random()*H/140)/D*D,
+    ty:H*(.12+Math.random()*.33),c:pick(colors),big,trail:[]})}
+  function explode(r){
+    const type=Math.floor(Math.random()*3),n=r.big?220:140,c2=pick(colors);
+    for(let k=0;k<n;k++){const a=Math.random()*Math.PI*2,sp=(type===1?(k%2?6:3.5):1.5+Math.random()*(r.big?7.5:5.5))*D;
+      parts.push({x:r.x,y:r.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:type===2?.006:.011+Math.random()*.006,
+        c:type===1&&k%2?c2:r.c,size:(type===2?1.6:2.6)*D,gold:type===2,twinkle:Math.random()<.35})}
+    flash=Math.min(1,flash+(r.big?.35:.15));
+  }
+  let next=0,finale=false;
+  function frame(now){
+    if(!alive)return;
+    const el=now-t0;
+    ctx.globalCompositeOperation="destination-out";
+    ctx.fillStyle="rgba(0,0,0,.28)";ctx.fillRect(0,0,W,H);
+    ctx.globalCompositeOperation="source-over";
+    if(flash>.02){$("fx").style.background=`rgba(255,235,190,${flash*.18})`;flash*=.85}else $("fx").style.background="transparent";
+    if(el<9000&&now>next){launch(Math.random()<.3);if(Math.random()<.5)launch(false);next=now+260+Math.random()*260}
+    if(el>8000&&!finale){finale=true;for(let k=0;k<14;k++)setTimeout(()=>alive&&launch(true),k*70)}
+    ctx.globalCompositeOperation="lighter";
+    for(let k=rockets.length-1;k>=0;k--){const r=rockets[k];r.trail.push([r.x,r.y]);if(r.trail.length>10)r.trail.shift();
+      r.x+=r.vx;r.y+=r.vy;r.vy+=.12*D;
+      ctx.strokeStyle=r.c;ctx.lineWidth=2.2*D;ctx.beginPath();r.trail.forEach(([x,y],q)=>q?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.stroke();
+      if(r.y<=r.ty||r.vy>=0){explode(r);rockets.splice(k,1)}}
+    for(let k=parts.length-1;k>=0;k--){const p=parts[k];
+      p.x+=p.vx;p.y+=p.vy;p.vy+=(p.gold?.03:.05)*D;p.vx*=.982;p.vy*=.982;p.life-=p.decay;
+      if(p.life<=0){parts.splice(k,1);continue}
+      const a=p.twinkle?Math.max(0,p.life*(.5+.5*Math.sin(now/40+k))):p.life;
+      ctx.globalAlpha=a;ctx.fillStyle=p.gold?"#FFD27A":p.c;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill()}
+    ctx.globalAlpha=1;
+    if(el>9500&&!rockets.length&&!parts.length){fxStop&&fxStop();return}
+    raf=requestAnimationFrame(frame);
+  }
+  function rain(now){
+    if(!alive)return;const el=now-t0;ctx.clearRect(0,0,W,H);
+    if(el<6000&&Math.random()<.35)parts.push({x:Math.random()*W,y:-30*D,vx:(Math.random()-.5)*.6,vy:(1.5+Math.random()*2)*D,rot:Math.random()*6});
+    for(let k=parts.length-1;k>=0;k--){const p=parts[k];p.x+=p.vx;p.y+=p.vy;p.rot+=.03;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.font=`${28*D}px serif`;ctx.fillText("🌶️",0,0);ctx.restore();if(p.y>H+40)parts.splice(k,1)}
+    if(el>6000&&!parts.length){fxStop&&fxStop();return}
+    raf=requestAnimationFrame(rain);
+  }
+  raf=requestAnimationFrame(win?frame:rain);
+  addEventListener("resize",size);
+  fxStop=()=>{alive=false;cancelAnimationFrame(raf);ctx.clearRect(0,0,W,H);cv.hidden=true;removeEventListener("resize",size);fxStop=null};
+}
+
+function deal(i,count,flags={}){
+  for(let k=0;k<count;k++)S.players[i].hand.push({c:S.deck.pop(),...flags,...(S.afterDeal?{got:true}:{}),seenBy:new Set()});
+}
+function dealAll(count,flags){for(let i=0;i<3;i++)deal(i,count,flags);S.players.forEach(p=>sortHand(p.hand))}
+
+async function doBidding(){
+  const m=S.mission;
+  setMsg(`${S.players[S.dealer].name} ${verb(S.dealer,"sagst","sagt")} zuerst an.`);
+  for(let k=0;k<3;k++){
+    const i=(S.dealer+k)%3,p=S.players[i];S.turn=i;render();
+    let b;
+    if(p.human)b=await ask({kind:"bid"});
+    else{await sleep(800);b=aiBid(i)}
+    p.bid=b;S.lastBid=b;setMsg(`${p.name} ${verb(i,"sagst","sagt")} ${bidTxt(b)} an.`);
+    logEv({t:"ansage",p:i,b,...(m===37?{text:bidTxt(b)}:{}),hand:p.hand.map(cardTxt)});
+  }
+  if(m===10){S.hideMine=false;S.memoOn=false}
+  S.turn=-1;render();await sleep(700);
+}
+async function revealCards(){
+  const picks={1:aiReveal(1),2:aiReveal(2)};
+  const me=S.players[0];
+  if(me.hand.some(o=>!o.open)){
+    const o=(await ask({kind:"pick",count:1,labels:["👁"],prompt:"Lege eine Handkarte offen hin. Sie darf erst gespielt werden, wenn deine Hand leer ist.",only:new Set(me.hand.filter(o=>!o.open))}))[0];
+    o.open=true;
+  }
+  [1,2].forEach(i=>{if(picks[i])picks[i].open=true});
+  logEv({t:"offengelegt",hand:snapHands()});
+  setMsg("Jeder hat eine Karte offen hingelegt.");render();await sleep(1100);
+}
+async function playRound(){
+  S.round++;
+  if(S.size in DECKS){
+    S.card=drawMission(S.size);S.mission=S.card.r;S.total=S.card.n;
+  } else {S.card=null;S.mission=null;S.total=S.size==="mix"?3+Math.floor(Math.random()*6):+S.size}
+  S.m8=null;S.passSeq=0;S.lastPass={};S.lead36=null;S.banned=S.mission===3?S.card.ban:null;S.lastBid=null;S.hideMine=false;S.memoOn=false;S.lastTrick=null;S.lastWin=-1;
+  S.players.forEach(p=>p.memo=null);
+  if(S.card){render();await introMission()}
+  S.deck=shuffle([...Array(55)].map((_,i)=>i+1).concat("J"));
+  S.players.forEach(p=>{p.hand=[];p.bid=null;p.tricks=0;p.bonus=0;p.discards=[];p.gifted=false;p.changed=false});S.gone=new Set();
+  S.mode=S.mission===9?"low":"high";S.trick=[];S.played=0;S.afterDeal=false;
+  const m=S.mission;
+  if(m===20)dealAll(2,{blind:true});
+  else if(m===5)dealAll(S.total,{blind:true});
+  else if(m===6)dealAll(2);
+  else if(m===21)dealAll(4);
+  else if(m===22)dealAll(3);
+  else if(m===36)dealAll(7);
+  else if(m===25)dealAll(3,{open:true});
+  else dealAll(S.total);
+  S.afterDeal=true;// alles, was ab jetzt ausgeteilt wird, ist nachgezogen
+
+  logEv({t:"runde",r:S.round,mission:S.mission,karten:S.total,beginnt:S.dealer});
+  logSnap("nach dem Austeilen");
+  // Kurzes Ansehen (Regel 10 und 12)
+  if(m===10||m===12){
+    const sec=m===10?3:5;
+    S.hideMine=true;setMsg("Deine Karten liegen verdeckt.");render();
+    await ask({kind:"choice",prompt:`Bereit? Du hast ${sec} Sekunden zum Ansehen.`,options:[[`Karten ansehen (${sec} Sekunden)`,1]]});
+    S.hideMine=false;render();
+    for(let k=sec;k>0;k--){setMsg(`Schau dir deine Karten an: noch ${k} Sekunde${k>1?"n":""}`);await sleep(1000)}
+    [1,2].forEach(i=>makeMemo(S.players[i],m));S.memoOn=true;
+    S.hideMine=true;setMsg(m===10?"Karten verdeckt. Jetzt wird angesagt.":"Karten verdeckt. Du spielst die ganze Runde blind.");render();await sleep(900);
+  }
+  // Regel 34: vor der Ansage 2 Karten nach rechts
+  if(m===34||m===35){setMsg(`Vor der Ansage: jeder gibt 2 Karten nach ${m===34?"rechts":"links"}.`);render();await sleep(300);
+    await passCards([S.card.dir,S.card.dir],[],S.dealer);logSnap("nach dem ersten Weitergeben");}
+  // Ansagen (bei Regel 28 erst nach dem ersten Stich)
+  if(m!==28)await doBidding();
+  else setMsg("Der erste Stich wird ohne Ansage gespielt.");
+
+  // Nach der Ansage
+  if(m===20){S.players.forEach(p=>p.hand.forEach(o=>{o.blind=false;o.open=true}));dealAll(1);setMsg("Karten aufgedeckt, jeder bekommt eine dritte.");}
+  if(m===5){S.players.forEach(p=>p.hand.forEach(o=>{o.blind=false;o.open=true}));setMsg("Alle Karten werden aufgedeckt.");}
+  if(m===6){dealAll(1);setMsg("Jeder zieht eine Karte nach.");}
+  if(m===7){S.players.forEach(p=>p.hand.forEach(o=>{o.open=true}));setMsg("Alle legen ihre Karten offen hin.");}
+  if(m===34||m===35){setMsg(`Nach der Ansage: noch einmal 2 Karten nach ${m===34?"rechts":"links"}.`);render();await sleep(300);
+    await passCards([S.card.dir,S.card.dir],[],S.dealer);}
+  if(m===1){setMsg("Die anderen wählen ihre Karten …");render();await sleep(300);
+    const d=S.card.dir,x=S.card.x;
+    await passCards(Array(x).fill(d),[...Array(x)].map((_,k)=>`Karte ${k+1} von ${x} für ${S.players[d].name}: tippe sie an.`),S.dealer);}
+  if(m===2){const d=S.card.dir,old=S.players.map(p=>p.hand);
+    old.forEach((h,i)=>h.forEach(o=>{o.open=false;o.blind=false;o.seenBy=new Set([i])}));
+    old.forEach((h,i)=>{S.players[(i+d)%3].hand=sortHand(h)});
+    logEv({t:"alle_weitergeben",richtung:d,hand:snapHands()});
+    setMsg(`Alle geben ihre Karten ${d===1?"nach links":"nach rechts"}. Du hast jetzt die Karten von ${S.players[(3-d)%3].name}.`);}
+  if(m===22){dealAll(3,{open:true});setMsg("Jeder bekommt 3 offene Karten.");}
+  if(m===25){dealAll(3);setMsg("Jeder bekommt 3 verdeckte Karten.");}
+  if(m===19){setMsg("Die anderen wählen ihre Karten …");render();await sleep(300);await passCards([1,2],["Welche Karte gibst du Rosa (links)?","Welche Karte gibst du Bruno (rechts)?"],S.dealer);}
+  if(m===23){
+    setMsg("Die anderen wählen ihre Karten …");render();await sleep(300);
+    const aiPicks={1:aiDiscard(1),2:aiDiscard(2)};
+    const p0=S.players[0];
+    const ab=await ask({kind:"pick",count:2,prompt:"Wähle 2 Karten zum Ablegen."});
+    ab.forEach(o=>{removeCard(p0,o);p0.discards.push(o.c)});
+    [1,2].forEach(i=>aiPicks[i].forEach(o=>{removeCard(S.players[i],o);S.players[i].discards.push(o.c)}));
+    logEv({t:"abgelegt",karten:S.players.map(p=>p.discards)});
+    for(let i=0;i<3;i++)deal(i,2);S.players.forEach(p=>sortHand(p.hand));
+    setMsg("Jeder hat 2 Karten abgelegt und 2 neue gezogen.");
+  }
+  logSnap("nach der Ansage");
+  render();await sleep([1,2,5,6,7,19,20,22,23,25].concat([34,35]).includes(m)?1300:0);
+
+  // Stiche
+  let leader=S.dealer;
+  for(let t=0;t<S.total;t++){
+    if(m===24)S.mode=t<3?"high":"low";
+    setMsg(`${S.players[leader].name} ${verb(leader,"spielst","spielt")} aus.`);
+    const w=await playTrick(leader);S.played++;
+    if(m===28&&t===0){S.nextLead=w;await doBidding()}
+    S.nextLeader33=w;
+    if(m===33&&t<S.total-1&&S.players.some(p=>p.hand.some(o=>!o.open)))await revealCards();
+    const pl=n=>n===1?"1 Pili":n+" Pilis";
+    if(m===26){const n=S.lastTrick.filter(x=>!isJ(x.card.c)&&x.card.c<=9).length;if(n){S.players[w].bonus+=n;setMsg(`${S.players[w].name} ${verb(w,"bekommst","bekommt")} ${pl(n)} abgezogen.`);render();await sleep(1200)}}
+    if(m===11&&(t===0||t===S.total-1)){S.players[w].bonus--;setMsg(`${S.players[w].name} ${verb(w,"bekommst","bekommt")} 1 Pili Strafe für den ${t===0?"ersten":"letzten"} Stich.`);render();await sleep(1100)}
+    if(m===16){const n=S.lastTrick.filter(x=>!isJ(x.card.c)&&S.card.nums.includes(x.card.c)).length;if(n){S.players[w].bonus-=n;setMsg(`${S.players[w].name} ${verb(w,"bekommst","bekommt")} ${pl(n)} Strafe für Strafzahlen.`);render();await sleep(1200)}}
+    if(m===17&&t<S.total-1)await swapAfterTrick(w);
+    if(m===36&&t<S.total-1)await discardAfterTrick(w);
+    if(m===30&&!S.players[w].gifted)await giftAfterTrick(w);
+    if(t<S.total-1){
+      if(m===18){
+        let mode;
+        if(w===0)mode=await ask({kind:"choice",prompt:"Was gewinnt den nächsten Stich?",options:[["Höchste Karte","high"],["Niedrigste Karte","low"]]});
+        else{await sleep(400);mode=aiChooseMode(w)}
+        S.mode=mode;logEv({t:"modus",von:w,modus:mode});setMsg(`${S.players[w].name} ${verb(w,"bestimmst","bestimmt")}: ${mode==="high"?"höchste":"niedrigste"} Karte gewinnt.`);render();await sleep(900);
+      }
+      if(m===21&&t<2){dealAll(1);setMsg("Jeder zieht eine Karte nach.");render();await sleep(900)}
+      if(m===27){
+        let dir;
+        if(w===0)dir=await ask({kind:"choice",prompt:"In welche Richtung wird weitergegeben?",options:[["Links (an Rosa)",1],["Rechts (an Bruno)",2]]});
+        else{await sleep(400);dir=aiChooseDir(w,w)}
+        setMsg(`${S.players[w].name} ${verb(w,"gibst","gibt")} die Richtung vor: ${dir===1?"links":"rechts"}.`);render();
+        await passCards([dir],[`Welche Karte gibst du ${S.players[dir].name}?`],w);
+      }
+    }
+    if(t<S.total-1&&[1,2,17,19,21,23,27,30,33,18].includes(m))logSnap(`nach Stich ${t+1}`);
+    leader=w;
+  }
+  if(m===4)S.players.forEach(p=>{if(p.bid===p.tricks)p.bonus=p.tricks});
+  if(m===31)S.players.forEach(p=>{if(p.bid===0&&p.tricks===0)p.bonus+=1});
+  if(m===29)S.players.forEach(p=>{const d=Math.abs(p.bid-p.tricks);p.bonus+=d===0?1:-d});
+  if(m===32){const mx=Math.max(...S.players.map(p=>p.tricks));S.players.forEach(p=>{if(p.tricks===mx)p.bonus-=1})}
+}
+
+async function discardAfterTrick(w){
+  S.lead36=w;
+  setMsg("Jeder wirft eine Karte verdeckt ab.");render();
+  const ai={1:aiDiscard36(1),2:aiDiscard36(2)};
+  const o0=(await ask({kind:"pick",count:1,labels:["✕"],prompt:"Wirf eine Karte verdeckt ab. Sie zählt nicht mehr."}))[0];
+  const all={0:o0,...ai};
+  for(let i=0;i<3;i++){removeCard(S.players[i],all[i]);S.players[i].discards.push(all[i].c)}
+  logEv({t:"abgeworfen",karten:[0,1,2].map(i=>all[i].c)});
+  setMsg("Alle haben eine Karte abgeworfen.");render();await sleep(900);
+}
+function aiDiscard36(i){
+  const h=S.players[i].hand,nj=h.filter(o=>!isJ(o.c)),cands=nj.length?nj:h;
+  if(cands.length===1)return cands[0];
+  const remT=S.total-S.played;
+  const ev=(w,o)=>{const H=w.hands,mine=w.vmap&&w.vmap.has(o)?w.vmap.get(o):o.c,ix=H[i].indexOf(mine);if(ix>=0)H[i].splice(ix,1);
+    for(let j=0;j<3;j++)if(j!==i&&H[j].length>remT){const c=giveAwayH(H[j],S.players[j].bid-S.players[j].tricks,remT,1)[0];if(c!==undefined)H[j].splice(H[j].indexOf(c),1)}
+    const st=baseState(w,{leader:S.lead36??i});runToEnd(st);return scoreOf(st,i)};ev.who=i;
+  return bestOf(cands,Math.max(40,Math.floor(BUDGET/cands.length)),ev);
+}
+async function giftAfterTrick(w){
+  const opts=[0,1,2].filter(q=>q!==w);
+  let q;
+  if(w===0)q=await ask({kind:"choice",prompt:"Willst du den Stich verschenken? (einmal pro Runde)",options:[["Behalten",-1],...opts.map(o=>[`An ${S.players[o].name}`,o])]});
+  else{await sleep(400);q=aiGift(w)}
+  if(q<0)return;
+  S.players[w].tricks--;S.players[q].tricks++;S.players[w].gifted=true;
+  logEv({t:"verschenkt",von:w,an:q});
+  setMsg(`${S.players[w].name} ${verb(w,"schenkst","schenkt")} den Stich ${q===0?"dir":S.players[q].name}.`);render();await sleep(1500);
+}
+async function adjustBids(w){
+  for(let k=0;k<3;k++){
+    const i=(S.dealer+k)%3,p=S.players[i],b=p.bid;
+    const ds=[-1,0,1].filter(d=>b+d>=0&&b+d<=S.total);
+    let d;
+    if(i===0)d=await ask({kind:"choice",prompt:`Nachbessern? Deine Ansage ist ${b}, du hast ${p.tricks} Stiche. Ändern kostet 1 Pili.`,options:ds.map(x=>[x===0?`Bei ${b} bleiben`:`Auf ${b+x} ${x<0?"senken":"erhöhen"}`,x])});
+    else{await sleep(500);d=aiAdjust(i,w,ds)}
+    if(d!==0){p.bid=b+d;p.changed=true;p.bonus-=1;setMsg(`${p.name} ${verb(i,"änderst","ändert")} die Ansage auf ${p.bid}.`)}
+    else setMsg(`${p.name} ${verb(i,"bleibst","bleibt")} bei ${b}.`);
+    render();await sleep(1100);
+  }
+}
+function introMission(){
+  return new Promise(res=>{
+    $("introPanel").innerHTML=`<div class="intro-no">Mission ${S.card.r}</div><div class="intro-n">${S.card.r===36?"7 Karten, 4 Stiche":S.card.n===3&&S.card.r===6?"2+1 Karten":S.card.n+" Karten"}</div><p class="intro-t">${cardText(S.card)}</p><button class="primary" id="introOk">Verstanden</button>`;
+    $("intro").hidden=false;$("introOk").focus();
+    $("introOk").onclick=()=>{$("intro").hidden=true;res()};
+  });
+}
+function trickView(trick,win,cls){
+  return [1,2,0].map(i=>{const k=trick.findIndex(x=>x.i===i);
+    let inner;
+    if(k<0)inner=`<span class="${cls} ph"></span>`;
+    else{const c=trick[k].card.c,v=trick[k].value;
+      const ord=`<i class="ord">${k+1}</i>`;
+      if(isJ(c))inner=`<span class="${cls} j${k===win?" win":""}">★${v}${ord}</span>`;
+      else{const h=hue(c),mk=markOf(c);inner=`<span class="${cls}${k===win?" win":""}" style="background:hsl(${h},82%,64%);border-color:hsl(${h},60%,42%)">${c}${ord}${mk?`<i class="mmark ${mk.cls}"></i>`:""}</span>`}}
+    return `<span class="lt s${i}">${inner}<small>${S.players[i].name}</small></span>`}).join("");
+}
+function removeCard(p,o){p.hand.splice(p.hand.indexOf(o),1)}
+
+function aiGiveOne(i){
+  const p=S.players[i];
+  const v=giveAwayH(p.hand.map(o=>o.c),p.bid-p.tricks,S.total-S.played,1)[0];
+  return p.hand.find(o=>o.c===v);
+}
+async function swapAfterTrick(w){
+  let q;
+  if(w===0)q=await ask({kind:"choice",prompt:"Mit wem tauschst du eine Karte?",options:[["Rosa",1],["Bruno",2]]});
+  else{await sleep(400);q=aiSwapPartner(w)}
+  setMsg(`${S.players[w].name} ${verb(w,"tauschst","tauscht")} mit ${q===0?"dir":S.players[q].name}.`);render();
+  let gw=w===0?null:aiGiveOne(w),gq=q===0?null:aiGiveOne(q);
+  if(w===0)gw=(await ask({kind:"pick",count:1,labels:["→ "+S.players[q].name],prompt:`Welche Karte gibst du ${S.players[q].name}?`}))[0];
+  if(q===0)gq=(await ask({kind:"pick",count:1,labels:["→ "+S.players[w].name],prompt:`Welche Karte gibst du ${S.players[w].name}?`}))[0];
+  logEv({t:"tausch",gewinner:w,partner:q,karten:[gw.c,gq.c]});
+  removeCard(S.players[w],gw);removeCard(S.players[q],gq);
+  S.passSeq=(S.passSeq||0)+1;S.lastPass=S.lastPass||{};S.lastPass[w]=S.passSeq;S.lastPass[q]=S.passSeq;
+  [[gw,w],[gq,q]].forEach(([o,from])=>{o.open=false;o.blind=false;o.got=true;o.seenBy=new Set([from]);o.passT=S.passSeq});
+  S.players[q].hand.push(gw);S.players[w].hand.push(gq);
+  S.players.forEach(p=>sortHand(p.hand));
+  if(w===0||q===0){const got=w===0?gq:gw;setMsg(`Getauscht. Du bekommst ${isJ(got.c)?"den Joker":"die "+got.c}.`)}
+  else setMsg(`${S.players[w].name} und ${S.players[q].name} haben getauscht.`);
+  render();await sleep(1300);
+}
+
+async function passCards(dirs,prompts,leader){
+  const give=[[],aiPass(1,dirs,leader),aiPass(2,dirs,leader)];
+  const labels=dirs.map(d=>"→ "+S.players[d].name);
+  const same=dirs.every(d=>d===dirs[0]);
+  const pr=same?`Wähle ${dirs.length===1?"1 Karte":dirs.length+" Karten"} für ${S.players[dirs[0]].name}.`:`Wähle 2 Karten: die erste für ${S.players[dirs[0]].name}, die zweite für ${S.players[dirs[1]].name}.`;
+  const picked=await ask({kind:"pick",count:dirs.length,labels,prompt:pr});
+  picked.forEach(o=>{removeCard(S.players[0],o);give[0].push(o)});
+  [1,2].forEach(i=>give[i].forEach(o=>removeCard(S.players[i],o)));
+  logEv({t:"weitergeben",richtung:dirs,karten:give.map(g=>g.map(o=>o.c))});
+  S.passSeq=(S.passSeq||0)+1;S.lastPass=S.lastPass||{};
+  for(let i=0;i<3;i++){S.lastPass[i]=S.passSeq;dirs.forEach((d,k)=>{const o=give[i][k];o.open=false;o.blind=false;o.got=true;o.seenBy=new Set([i]);o.passT=S.passSeq;S.players[(i+d)%3].hand.push(o)})}
+  S.players.forEach(p=>sortHand(p.hand));
+  const nm=c=>isJ(c)?"den Joker":"die "+c;
+  const got=dirs.map((d,k)=>nm(give[(3-d)%3][k].c));
+  setMsg(`Karten weitergegeben. Du bekommst ${got.join(" und ")}.`);
+  render();await sleep(1300);
+}
+
+const strength=(v,mode)=>mode==="high"?v:56-v;
+
+async function playTrick(leader){
+  S.trick=[];
+  if(S.mission===8){
+    S.turn=-1;render();await sleep(500);
+    const moves={1:aiPlay(1),2:aiPlay(2)};
+    S.turn=0;setMsg("Alle spielen gleichzeitig. Wähle deine Karte.");
+    moves[0]=await ask({kind:"play"});
+    S.m8=S.m8||[[0,0],[0,0],[0,0]];
+    for(let i=0;i<3;i++){const mv=moves[i],h=S.players[i].hand;const top=h.every(o=>cv(o)<=cv(mv.card));if(h.length>1){S.m8[i][1]++;if(top)S.m8[i][0]++}}
+    for(let k=0;k<3;k++){const i=(leader+k)%3,mv=moves[i];logEv({t:"zug",p:i,karte:isJ(mv.card.c)?"J"+mv.value:mv.card.c,gleichzeitig:true});removeCard(S.players[i],mv.card);S.gone.add(mv.card.c);S.trick.push({i,card:mv.card,value:mv.value})}
+    S.turn=-1;setMsg("Aufgedeckt!");render();await sleep(1300);
+  } else {
+    for(let k=0;k<3;k++){
+      const i=(leader+k)%3,p=S.players[i];S.turn=i;render();
+      let mv;
+      if(p.human)mv=await ask({kind:"play"});
+      else{await sleep(850);mv=aiPlay(i)}
+      logEv({t:"zug",p:i,karte:isJ(mv.card.c)?"J"+mv.value:mv.card.c,hand:p.hand.map(cardTxt),...(p.human?{}:{bewertung:S.lastEval})});
+      removeCard(p,mv.card);S.gone.add(mv.card.c);S.trick.push({i,card:mv.card,value:mv.value});render();
+    }
+    S.turn=-1;render();await sleep(900);
+  }
+  let best=0;S.trick.forEach((t,k)=>{if(strength(t.value,S.mode)>strength(S.trick[best].value,S.mode))best=k});
+  const w=S.trick[best].i;S.players[w].tricks++;S.winIdx=best;
+  setMsg(w===0?"Du gewinnst den Stich.":`${S.players[w].name} gewinnt den Stich.`);
+  render();await sleep(2000);
+  logEv({t:"stich",gewinner:w,karten:S.trick.map(x=>[x.i,isJ(x.card.c)?"J"+x.value:x.card.c])});
+  S.lastTrick=S.trick;S.lastWin=best;S.trick=[];S.winIdx=-1;render();
+  return w;
+}
+
+function showResult(){
+  return new Promise(res=>{
+    const bonusCol=[4,11,16,26].includes(S.mission)||S.players.some(p=>p.bonus);
+    const sp=b=>b>0?`<td class="minus">−${b}</td>`:b<0?`<td class="plus">+${-b}</td>`:"<td>0</td>";
+    const deltas=[];
+    const rows=S.players.map(p=>{const d=missOf(S.mission,p.bid,p.tricks);const before=p.pilis;p.pilis=Math.max(0,p.pilis+d-p.bonus);deltas.push(p.pilis-before);
+      return `<tr><td>${p.name}</td><td>${bidTxt(p.bid)}</td><td>${p.tricks}</td><td class="${d?"plus":""}">${d?"+"+d:"0"}</td>${bonusCol?sp(p.bonus):""}<td>${p.pilis}</td></tr>`}).join("");
+    const done=S.players.some(p=>p.pilis>=LIMIT);
+    logEv({t:"ergebnis",r:S.round,ansage:S.players.map(p=>p.bid),stiche:S.players.map(p=>p.tricks),sonder:S.players.map(p=>p.bonus),pilis:S.players.map(p=>p.pilis)});
+    if(S.history)S.history.push({round:S.round,mission:S.mission,d:deltas});
+    let html=`<h2>Runde ${S.round}</h2><table><tr><th>Spieler</th><th>Ansage</th><th>Stiche</th><th>Pilis</th>${bonusCol?"<th>Sonder</th>":""}<th>Gesamt</th></tr>${rows}</table>`;
+    if(done){
+      const min=Math.min(...S.players.map(p=>p.pilis));
+      const winners=S.players.filter(p=>p.pilis===min).map(p=>p.name);
+      const others=winners.filter(n=>n!=="Du");
+      html+=`<p><strong>${winners.join(" und ")} ${winners.length>1?"haben":"hat"} die wenigsten Pilis. Das Spiel ist vorbei!</strong></p><button class="primary" id="rb">Zum Spielende</button>`;
+    } else html+=`<button class="primary" id="rb">Nächste Runde</button>`;
+    render();
+    $("resultPanel").innerHTML=html;$("result").hidden=false;$("rb").focus();
+    $("rb").onclick=()=>{$("result").hidden=true;res(done)};
+  });
+}
+
+/* ---------- Eingaben ---------- */
+function ask(ui){return new Promise(res=>{S.ui={...ui,sel:[],resolve:v=>{S.ui=null;res(v)}};render()})}
+
+function bidSum(){return S.players.reduce((a,p)=>a+(p.bid??0),0)}
+function lockedBids(){
+  const s=new Set();
+  const f=forbiddenBid();if(f!=null)s.add(f);
+  if(S.banned!=null)s.add(S.banned);
+  if(S.mission===13&&S.lastBid!=null)s.add(S.lastBid);
+  return s;
+}
+function legalHand(objs){
+  if(S.mission===33){const hid=objs.filter(o=>!o.open);return hid.length?hid:objs}
+  if(S.mission!==15)return objs;
+  const nums=objs.filter(o=>!isJ(o.c));if(!nums.length)return objs;
+  const mn=nums.reduce((a,b)=>a.c<b.c?a:b),mx=nums.reduce((a,b)=>a.c>b.c?a:b);
+  return objs.filter(o=>isJ(o.c)||o===mn||o===mx);
+}
+function forbiddenBid(){
+  if(S.mission===37)return null;
+  const made=S.players.filter(p=>p.bid!=null);
+  if(made.length!==2)return null;
+  const f=S.total-made.reduce((s,p)=>s+p.bid,0);
+  return f>=0&&f<=S.total?f:null;
+}
+
+/* ---------- Computer (Simulation vieler möglicher Kartenverteilungen) ---------- */
+const ALL=[...Array(55)].map((_,i)=>i+1).concat("J");
+const BUDGET=3000;
+
+function heurPlay(hand,need,mode,trick,nextNeed,pen,opt){
+  const rem=opt&&opt.rem||hand.length,st=c=>strength(c,mode);// rem = echte Kartenzahl, auch wenn nur ein Teil spielbar ist
+  const isPen=c=>!!pen&&!isJ(c)&&pen.has(c);
+  const trickPen=pen?trick.filter(t=>isPen(t.c)).length:0;
+  const nums=hand.filter(c=>!isJ(c)).sort((a,b)=>st(a)-st(b));
+  const hasJ=hand.includes("J");
+  const leading=trick.length===0,last=trick.length===2;
+  const cur=leading?-1:Math.max(...trick.map(t=>strength(t.value,mode)));
+  const beat=nums.filter(c=>st(c)>cur);
+  const J=s=>({c:"J",value:mode==="high"?s:56-s}),N=c=>({c,value:c});
+  const lowest=()=>nums.length?N(nums[0]):J(0);
+  const top=nums[nums.length-1];
+  let wantWin;const partial=need>0&&need<rem;
+  if(need<=0)wantWin=false;
+  else if(need>=rem)wantWin=true;
+  else if(leading)wantWin=hasJ||(top!==undefined&&st(top)>=44);
+  else wantWin=(last&&beat.length>0)||(need*2>=rem&&beat.length>0)||beat.some(c=>st(c)>=40)||(hasJ&&need>=rem-1);
+  // Wer nicht muss, verbraucht keine Topkarte, um eine schon sehr hohe Karte zu überstechen
+  if(wantWin&&partial&&!leading&&!last&&cur>=44&&need<rem-1)wantWin=false;
+  if(wantWin&&partial&&!leading&&opt){
+    const canDuck=nums.some(c=>st(c)<cur)||hasJ;
+    // Gemein: Wer den Stich gerade hat, will keinen mehr -> liegen lassen, wenn man noch Luft hat
+    if(opt.winNeed!=null&&opt.winNeed<=0&&rem-need>=2&&canDuck)wantWin=false;
+    // Mission 15: jeder kann jederzeit ducken, hohe Karten sind knapp
+    if(opt.m15&&need*2<rem&&canDuck)wantWin=false;
+  }
+  // Strafzahlen im Stich: nur mitnehmen, wenn es gar nicht anders geht
+  if(wantWin&&trickPen>0&&need<rem)wantWin=false;
+  if(pen&&wantWin){const clean=beat.filter(c=>!isPen(c));if(clean.length){beat.length=0;beat.push(...clean)}}
+  if(wantWin){
+    if(leading)return top!==undefined&&(st(top)>=44||!hasJ)?N(top):J(56);
+    if(last)return beat.length?N(beat[0]):hasJ?J(56):lowest();
+    const strong=beat.find(c=>st(c)>=40);
+    if(strong!==undefined)return N(strong);
+    if(hasJ)return J(56);
+    return beat.length?N(beat[beat.length-1]):lowest();
+  }
+  if(pen){const below0=leading?[]:nums.filter(c=>st(c)<cur),bp=below0.filter(isPen);if(bp.length)return N(bp[bp.length-1])}
+  if(partial){
+    if(pen&&leading){const np=nums.filter(c=>!isPen(c));if(np.length)return N(np[0])}
+    // Kann ich nicht billig gewinnen: gefährlichste Karte sicher drunter abwerfen
+    if(!leading){const bl=nums.filter(c=>st(c)<cur);if(bl.length)return N(bl[bl.length-1])}
+    return lowest()}
+  if(leading)return nums.length&&(st(nums[0])<15||!hasJ)?N(nums[0]):J(0);
+  const below=nums.filter(c=>st(c)<cur);
+  // Spielverderber: Wer nach mir kommt und keinen Stich will, soll ihn möglichst nehmen müssen
+  if(below.length&&trick.length===1&&nextNeed!=null&&nextNeed<=0)return N(below[0]);
+  if(below.length)return N(below[below.length-1]);
+  if(hasJ)return J(0);
+  return N(top);
+}
+// Regel 33: Wer noch Stiche braucht, hebt starke Karten fürs offene Ende auf; wer keine will, hebt schwache auf
+function revealH(hid,need,mode){
+  const st=c=>isJ(c)?(need>0?99:-1):strength(c,mode);
+  const sorted=hid.slice().sort((a,b)=>st(a)-st(b));
+  return need>0?sorted[sorted.length-1]:sorted[0];
+}
+function chooseModeH(hand,need){
+  const nums=hand.filter(c=>!isJ(c));
+  if(!nums.length)return "high";
+  const mx=Math.max(...nums),mn=Math.min(...nums);
+  if(need>0)return mx>=56-mn?"high":"low";
+  return mn<=56-mx?"high":"low";
+}
+function giveAwayH(hand,need,rem,k,recvNeed){
+  // Wer wenig Stiche will, schiebt die höchste Karte nicht ausgerechnet dem zu, der Stiche braucht
+  if(recvNeed!=null&&recvNeed>0&&k===1&&need*2<rem){const nn=hand.filter(c=>!isJ(c)).sort((x,y)=>x-y);if(nn.length>1)return [nn[nn.length-2]]}
+  let cand=hand.filter(c=>!isJ(c));// Joker wird nie freiwillig abgegeben
+  if(cand.length<k)cand=[...hand];
+  cand.sort((a,b)=>(isJ(a)?99:a)-(isJ(b)?99:b));
+  return (need*2>=rem?cand:cand.reverse()).slice(0,k);
+}
+function simpleBid(hand,mission){
+  let e=0;
+  for(const c of hand){
+    if(isJ(c)){e+=.92;continue}
+    const h=Math.pow((c-1)/55,2),l=Math.pow((55-c)/55,2);
+    e+=(mission===24||mission===18)?Math.max(h,l)*.75:mission===9?l:h;
+  }
+  return mission===37?Math.round(e)%2:Math.round(e);
+}
+
+function runToEnd(st){
+  while(st.t<st.total){
+    if(st.mission===24)st.mode=st.t<3?"high":"low";
+    while(st.trick.length<3){
+      const p=(st.leader+st.trick.length)%3,h=st.hands[p];
+      if(!h.length)return;
+      let hh=h;
+      if(st.mission===33){const hid=h.filter(c=>!st.open[p].has(c));if(hid.length)hh=hid}
+      if(st.mission===15){const nums=h.filter(c=>!isJ(c));if(nums.length){const mn=Math.min(...nums),mx=Math.max(...nums);hh=h.filter(c=>isJ(c)||c===mn||c===mx)}}
+      const view=st.mission===8?[]:st.trick;
+      const nx=st.trick.length===1?(st.leader+2)%3:null;
+      let wn=null;if(view.length){let bi=0;view.forEach((x,k)=>{if(strength(x.value,st.mode)>strength(view[bi].value,st.mode))bi=k});wn=needOf(st.mission,st.bids[view[bi].p],st.tricks[view[bi].p])}
+      if(st.mission===8&&st.me!=null&&p!==st.me&&hh.length>1){// Gegner beim gleichzeitigen Spielen: mal hoch, mal nach Faustregel (mitgelernt)
+        const c8=S.m8?S.m8[p]:[0,0],q=(c8[0]+1)/(c8[1]+3);
+        if(Math.random()<q){const top=hh.reduce((a,c)=>(isJ(c)?99:c)>(isJ(a)?99:a)?c:a,hh[0]);h.splice(h.indexOf(top),1);st.trick.push({p,c:top,value:isJ(top)?56:top});continue}
+      }
+      const mv=heurPlay(hh,needOf(st.mission,st.bids[p],st.tricks[p]),st.mode,view,nx==null?null:needOf(st.mission,st.bids[nx],st.tricks[nx]),st.mission===16?st.penSet:null,{winNeed:wn,m15:st.mission===15,rem:st.mission===36?st.total-st.t:h.length});
+      h.splice(h.indexOf(mv.c),1);st.trick.push({p,c:mv.c,value:mv.value});
+    }
+    let best=0;st.trick.forEach((x,k)=>{if(strength(x.value,st.mode)>strength(st.trick[best].value,st.mode))best=k});
+    const w=st.trick[best].p;st.tricks[w]++;
+    if(st.fw===undefined)st.fw=w;
+    if(st.mission===26)st.bonus[w]+=st.trick.filter(x=>!isJ(x.c)&&x.c<=9).length;
+    if(st.mission===11&&(st.t===0||st.t===st.total-1))st.bonus[w]--;
+    if(st.mission===16)st.bonus[w]-=st.trick.filter(x=>!isJ(x.c)&&st.penSet.has(x.c)).length;
+    if(st.t<st.total-1){
+      if(st.mission===18)st.mode=chooseModeH(st.hands[w],st.bids[w]-st.tricks[w]);
+      if(st.mission===21&&st.t<2)for(let p=0;p<3;p++)if(st.pool.length)st.hands[p].push(st.pool.pop());
+      if(st.mission===27){const rem=st.total-st.t-1;
+        // Gewinner wählt die Richtung nach der Karte, die er bekommt
+        const g0=[0,1,2].map(p=>giveAwayH(st.hands[p],st.bids[p]-st.tricks[p],rem,1)[0]);
+        const needW=st.bids[w]-st.tricks[w],val=c=>c===undefined?28:isJ(c)?56:c,in1=val(g0[(w+2)%3]),in2=val(g0[(w+1)%3]);
+        const d=needW>0?(in1>=in2?1:2):(in1<=in2?1:2);
+        const g=[0,1,2].map(p=>{const r=(p+d)%3;return giveAwayH(st.hands[p],st.bids[p]-st.tricks[p],rem,1,st.bids[r]-st.tricks[r])[0]});
+        g.forEach((c,p)=>{if(c!==undefined)st.hands[p].splice(st.hands[p].indexOf(c),1)});
+        g.forEach((c,p)=>{if(c!==undefined)st.hands[(p+d)%3].push(c)});}
+      if(st.mission===36){const remT=st.total-st.t-1;for(let p=0;p<3;p++)if(st.hands[p].length>remT){const c=giveAwayH(st.hands[p],st.bids[p]-st.tricks[p],remT,1)[0];if(c!==undefined)st.hands[p].splice(st.hands[p].indexOf(c),1)}}
+      if(st.mission===17){const q=(w+1+Math.floor(Math.random()*2))%3,rem=st.total-st.t-1;
+        const a=giveAwayH(st.hands[w],st.bids[w]-st.tricks[w],rem,1)[0],b=giveAwayH(st.hands[q],st.bids[q]-st.tricks[q],rem,1)[0];
+        if(a!==undefined&&b!==undefined){st.hands[w].splice(st.hands[w].indexOf(a),1);st.hands[q].splice(st.hands[q].indexOf(b),1);st.hands[w].push(b);st.hands[q].push(a)}}
+    }
+    if(st.mission===33&&st.t<st.total-1)for(let p=0;p<3;p++){const hid=st.hands[p].filter(c=>!st.open[p].has(c));if(hid.length)st.open[p].add(revealH(hid,st.bids[p]-st.tricks[p],st.mode))}
+    if(st.mission===30&&!st.used[w]&&st.tricks[w]>st.bids[w]){
+      const os=[0,1,2].filter(q=>q!==w),q=os.find(q=>st.tricks[q]>=st.bids[q])??os[0];
+      st.tricks[w]--;st.tricks[q]++;st.used[w]=true;
+    }
+    st.leader=w;st.trick=[];st.t++;
+  }
+  if(st.mission===4)for(let p=0;p<3;p++)if(st.bids[p]===st.tricks[p])st.bonus[p]+=st.tricks[p];
+  if(st.mission===31)for(let p=0;p<3;p++)if(st.bids[p]===0&&st.tricks[p]===0)st.bonus[p]++;
+  if(st.mission===29)for(let p=0;p<3;p++){const d=Math.abs(st.bids[p]-st.tricks[p]);st.bonus[p]+=d===0?1:-d}
+  if(st.mission===32){const mx=Math.max(...st.tricks);for(let p=0;p<3;p++)if(st.tricks[p]===mx)st.bonus[p]--}
+}
+function scoreOf(st,me){
+  let s=0;const P=S.players,fin=[];
+  for(let p=0;p<3;p++){
+    const v=missOf(st.mission,st.bids[p],st.tricks[p])-st.bonus[p];
+    fin.push(Math.max(0,(P[p].pilis||0)+v));
+    // Pilis für Gegner zählen mehr, wenn sie vorn liegen
+    s+=p===me?-v:(P[p].pilis<=P[me].pilis?.7:.5)*v;
+  }
+  // Spielende in Sicht: Sieg oder Niederlage einrechnen
+  if(fin.some(f=>f>=LIMIT)){
+    const mn=Math.min(...fin.filter((f,p)=>p!==me));
+    s+=fin[me]<mn?2.5:fin[me]===mn?1:-2.5;
+  }
+  return s;
+}
+
+/* Gedächtnis bei Zeitlimit: jede Karte wird nur als Bereich gemerkt (lo..hi), Joker sicher.
+   Mission 12: höchste Karte genauer (3 Karten ±1/±4, 5 Karten ±2/±5). Mission 10: nur grob hoch/mittel/niedrig. */
+const BANDS=[[1,18],[19,37],[38,55]];
+function memVal(i,o){const m=S.players[i].memo;return S.memoOn&&m&&m.has(o)?m.get(o).r:o.c}
+function makeMemo(p,mission){
+  const objs=p.hand.filter(o=>!isJ(o.c)).sort((a,b)=>a.c-b.c),n=objs.length,cl=v=>Math.max(1,Math.min(55,v));
+  const mem=new Map();
+  objs.forEach((o,k)=>{
+    if(mission===10){const b=BANDS.find(([a,z])=>o.c>=a&&o.c<=z);mem.set(o,{lo:b[0],hi:b[1],r:Math.round((b[0]+b[1])/2)});return}
+    const s=k===n-1?(n<=3?1:2):(n<=3?4:5);
+    const r=cl(o.c+Math.round((Math.random()*2-1)*s));mem.set(o,{lo:cl(r-s),hi:cl(r+s),r});
+  });
+  p.memo=mem;
+}
+// Einen möglichen echten Wert pro Karte ziehen (Reihenfolge bleibt, gesehene Karten scheiden aus)
+function drawMem(i,ex){
+  const p=S.players[i],m=p.memo,objs=p.hand.filter(o=>!o.blind&&!isJ(o.c)&&m&&m.has(o)).sort((a,b)=>a.c-b.c);
+  for(let tries=0;tries<20;tries++){
+    const used=new Set(),vals=[];let ok=true,last=0;
+    for(const o of objs){const {lo,hi}=m.get(o),opts=[];for(let v=Math.max(lo,last+1);v<=hi;v++)if(!ex.has(v)&&!used.has(v))opts.push(v);
+      if(!opts.length){ok=false;break}const v=opts[Math.floor(Math.random()*opts.length)];used.add(v);vals.push(v);last=v}
+    if(ok)return new Map(objs.map((o,k)=>[o,vals[k]]));
+  }
+  return new Map(objs.map(o=>[o,m.get(o).r]));
+}
+// Weitergegebene Karten: hohe Karten und Joker sicher gemerkt, der Rest nur mit gewisser Wahrscheinlichkeit (letztes Weitergeben besser als frühere)
+function passSure(o){return isJ(o.c)||o.c>=45}
+function knownTo(i,j,strict){return S.players[j].hand.filter(o=>{
+  if(o.open||o.blind)return true;if(!o.seenBy.has(i))return false;
+  if(o.passT==null||passSure(o))return true;if(strict)return false;
+  const recent=o.passT>=(S.lastPass&&S.lastPass[i]!=null?S.lastPass[i]:o.passT);return Math.random()<(recent?.75:.45);
+}).map(o=>o.c)}
+function sampleWorld(i){
+  const me=S.players[i];
+  const known=[0,1,2].map(j=>j===i?[]:knownTo(i,j));
+  let vmap=null;
+  if(S.memoOn&&me.memo){const ex0=new Set([...S.gone,...me.discards]);known.forEach(k=>k.forEach(c=>ex0.add(c)));vmap=drawMem(i,ex0)}
+  const ownVis=me.hand.filter(o=>!o.blind).map(o=>vmap&&vmap.has(o)?vmap.get(o):o.c),blind=me.hand.length-ownVis.length;
+  const ex=new Set([...ownVis,...S.gone,...me.discards]);
+  known.forEach(k=>k.forEach(c=>ex.add(c)));
+  const pool=shuffle(ALL.filter(c=>!ex.has(c)));
+  const hands=[0,1,2].map(j=>{
+    if(j===i)return ownVis.concat(pool.splice(0,blind));
+    return known[j].concat(pool.splice(0,S.players[j].hand.length-known[j].length));
+  });
+  return {hands,pool,vmap};
+}
+const cloneW=w=>({hands:w.hands.map(h=>h.slice()),pool:w.pool.slice(),vmap:w.vmap});
+function baseState(w,extra){
+  return Object.assign({hands:w.hands,pool:w.pool,bids:S.players.map(p=>p.bid),tricks:S.players.map(p=>p.tricks),
+    bonus:S.players.map(p=>p.bonus),trick:[],leader:S.dealer,t:S.played,mode:S.mode,total:S.total,mission:S.mission,nums:S.card&&S.card.nums||[],penSet:new Set(S.card&&S.card.nums||[]),used:S.players.map(p=>!!p.gifted),open:S.players.map((p,j)=>new Set(p.hand.filter(o=>o.open).map(o=>o.c)))},extra);
+}
+function bestOf(cands,n,evalFn){
+  const sums=new Array(cands.length).fill(0);
+  for(let s=0;s<n;s++){const w=sampleWorld(evalFn.who);cands.forEach((c,k)=>sums[k]+=evalFn(cloneW(w),c))}
+  let b=0;sums.forEach((v,k)=>{if(v>sums[b])b=k});
+  return cands[b];
+}
+
+/* Endspiel-Rechner: alle Karten bekannt und nur noch wenige übrig -> exakt durchrechnen */
+const EXACT_BAD=[8,12,17,18,21,27,30,36];
+function endgameReady(i){
+  if(EXACT_BAD.includes(S.mission)||S.memoOn)return false;
+  if(S.players.some(p=>p.bid==null))return false;
+  if(S.players[i].hand.some(o=>o.blind))return false;
+  for(let j=0;j<3;j++){if(j===i)continue;if(knownTo(i,j,true).length!==S.players[j].hand.length)return false}
+  return S.players.reduce((a,p)=>a+p.hand.length,0)<=12;
+}
+function exLegal(st,p){
+  const h=st.hands[p];let hh=h;
+  if(st.mission===33){const hid=h.filter(c=>!st.open[p].has(c));if(hid.length)hh=hid}
+  if(st.mission===15){const nums=h.filter(c=>!isJ(c));if(nums.length){const mn=Math.min(...nums),mx=Math.max(...nums);hh=h.filter(c=>isJ(c)||c===mn||c===mx)}}
+  const out=[];hh.forEach(c=>{if(isJ(c)){out.push({c,value:st.mode==="high"?56:0},{c,value:st.mode==="high"?0:56})}else out.push({c,value:c})});
+  return out;
+}
+function exSolve(st){
+  if(st.t>=st.total||st.hands.every(h=>!h.length)){
+    const b=st.bonus.slice(),tr=st.tricks;
+    if(st.mission===4)for(let p=0;p<3;p++)if(st.bids[p]===tr[p])b[p]+=tr[p];
+    if(st.mission===31)for(let p=0;p<3;p++)if(st.bids[p]===0&&tr[p]===0)b[p]++;
+    if(st.mission===29)for(let p=0;p<3;p++){const d=Math.abs(st.bids[p]-tr[p]);b[p]+=d===0?1:-d}
+    if(st.mission===32){const mx=Math.max(...tr);for(let p=0;p<3;p++)if(tr[p]===mx)b[p]--}
+    return [0,1,2].map(p=>-(missOf(st.mission,st.bids[p],tr[p])-b[p]));
+  }
+  if(st.mission===24)st.mode=st.t<3?"high":"low";
+  const p=(st.leader+st.trick.length)%3;
+  let best=null;
+  for(const mv of exLegal(st,p)){
+    const n={...st,hands:st.hands.map(h=>h.slice()),trick:st.trick.concat([{p,c:mv.c,value:mv.value}]),tricks:st.tricks.slice(),bonus:st.bonus.slice()};
+    n.hands[p].splice(n.hands[p].indexOf(mv.c),1);
+    if(n.trick.length===3){
+      let bi=0;n.trick.forEach((x,k)=>{if(strength(x.value,n.mode)>strength(n.trick[bi].value,n.mode))bi=k});
+      const w=n.trick[bi].p;n.tricks[w]++;
+      if(n.mission===26)n.bonus[w]+=n.trick.filter(x=>!isJ(x.c)&&x.c<=9).length;
+      if(n.mission===11&&(n.t===0||n.t===n.total-1))n.bonus[w]--;
+      if(n.mission===16)n.bonus[w]-=n.trick.filter(x=>!isJ(x.c)&&n.penSet.has(x.c)).length;
+      n.leader=w;n.trick=[];n.t++;
+    }
+    const v=exSolve(n);
+    if(!best||v[p]>best[p])best=v;
+  }
+  return best;
+}
+function aiExact(i,cands){
+  const known=[0,1,2].map(j=>j===i?S.players[i].hand.map(o=>o.c):knownTo(i,j,true));
+  let bestK=0,bestV=-1e9;const evals=[];
+  cands.forEach((c,k)=>{
+    const st=baseState({hands:known.map(h=>h.slice()),pool:[]},{trick:S.trick.map(t=>({p:t.i,c:t.card.c,value:t.value})),leader:S.trick.length?S.trick[0].i:i});
+    st.open=st.open.map(s=>new Set(s));
+    const h=st.hands[i];h.splice(h.indexOf(c.card.c),1);
+    let n={...st,trick:st.trick.concat([{p:i,c:c.card.c,value:c.value}])};
+    if(n.trick.length===3){
+      let bi=0;n.trick.forEach((x,q)=>{if(strength(x.value,n.mode)>strength(n.trick[bi].value,n.mode))bi=q});
+      const w=n.trick[bi].p;n.tricks=n.tricks.slice();n.bonus=n.bonus.slice();n.tricks[w]++;
+      if(n.mission===26)n.bonus[w]+=n.trick.filter(x=>!isJ(x.c)&&x.c<=9).length;
+      if(n.mission===11&&(n.t===0||n.t===n.total-1))n.bonus[w]--;
+      if(n.mission===16)n.bonus[w]-=n.trick.filter(x=>!isJ(x.c)&&n.penSet.has(x.c)).length;
+      n.leader=w;n.trick=[];n.t++;
+    }
+    const v=exSolve(n);evals.push([isJ(c.card.c)?"J"+c.value:c.card.c,v[i]]);
+    if(v[i]>bestV){bestV=v[i];bestK=k}
+  });
+  S.lastEval={exakt:evals};
+  return cands[bestK];
+}
+function aiPlay(i){
+  const p=S.players[i],mode=S.mode;
+  const cands=[];
+  legalHand(p.hand).forEach(o=>{if(isJ(o.c)){cands.push({card:o,value:mode==="high"?56:0},{card:o,value:mode==="high"?0:56})}else cands.push({card:o,value:o.c})});
+  S.lastEval=null;
+  if(cands.length===1)return cands[0];
+  if(endgameReady(i))return aiExact(i,cands);
+  const n=Math.max(40,Math.floor(BUDGET/cands.length));
+  const sums=new Array(cands.length).fill(0),wins=new Array(cands.length).fill(0);
+  for(let s=0;s<n;s++){
+    const w0=sampleWorld(i);
+    cands.forEach((c,k)=>{
+      const w=cloneW(w0);
+      const st=baseState(w,{me:i,trick:S.trick.map(t=>({p:t.i,c:t.card.c,value:t.value})),leader:S.trick.length?S.trick[0].i:i});
+      if(st.bids.some(b=>b==null))st.bids=st.bids.map((b,j)=>b??simpleBid(st.hands[j],S.mission));
+      const mine=isJ(c.card.c)?"J":(w.vmap&&w.vmap.has(c.card)?w.vmap.get(c.card):memVal(i,c.card)),h=st.hands[i];
+      const ix=h.indexOf(mine);if(ix>=0)h.splice(ix,1);
+      st.trick.push({p:i,c:mine,value:isJ(c.card.c)?c.value:mine});
+      runToEnd(st);sums[k]+=scoreOf(st,i);if(st.fw===i)wins[k]++;
+    });
+  }
+  // Joker hat einen Behaltewert: nur ausspielen, wenn er klar besser ist als jede andere Karte
+  const adj=sums.slice();
+  if(p.hand.length>2)cands.forEach((c,k)=>{if(isJ(c.card.c))adj[k]-=(S.mission===15?.8:.3)*n});
+  let b=0;adj.forEach((v,k)=>{if(v>adj[b])b=k});
+  // Gleichzeitig spielen: unberechenbar bleiben (gewichteter Zufall unter ähnlich guten Zügen)
+  if(S.mission===8){
+    const pool=cands.map((c,k)=>k).filter(k=>adj[k]>=adj[b]-.35*n);
+    const wts=pool.map(k=>Math.exp((adj[k]-adj[b])/(.12*n)));
+    let r=Math.random()*wts.reduce((a,x)=>a+x,0),pick=pool[0];
+    for(let q=0;q<pool.length;q++){r-=wts[q];if(r<=0){pick=pool[q];break}}
+    // Joker nicht verschwenden: Wenn eine normale Karte im Stich dasselbe bewirkt (sicher verlieren / sicher gewinnen), Joker behalten
+  if(isJ(cands[b].card.c)&&S.mission!==17&&!S.hideMine&&!S.memoOn){
+    const sv=c=>strength(c.value,mode),nj=cands.map((c,k)=>k).filter(k=>!isJ(cands[k].card.c));
+    const cur=S.trick.length?Math.max(...S.trick.map(t=>strength(t.value,mode))):-1;
+    const jv=sv(cands[b]),jTop=cands[b].value===(mode==="high"?56:0);
+    let same=[];
+    if(S.trick.length&&jv<=cur)same=nj.filter(k=>sv(cands[k])<=cur);
+    else if(jTop){
+      const seen=new Set([...p.hand.map(o=>o.c),...S.gone,...S.trick.map(t=>t.card.c)]);
+      let unseenMax=-1;for(let v=1;v<=55;v++)if(!seen.has(v))unseenMax=Math.max(unseenMax,strength(v,mode));
+      if(!seen.has("J"))unseenMax=99;
+      const later=3-S.trick.length-1;
+      same=nj.filter(k=>sv(cands[k])>cur&&(later===0||sv(cands[k])>unseenMax));
+    }
+    if(same.length)b=same.reduce((x,k)=>adj[k]>adj[x]?k:x,same[0]);
+  }
+  S.lastEval={sim:cands.map((c,k)=>[isJ(c.card.c)?"J"+c.value:c.card.c,+(sums[k]/n).toFixed(2)]),zufall:pool.length};
+    return cands[pick];
+  }
+  // Sicherheitsregel: Ansage erfüllt -> keine fast sichere Gewinnkarte, wenn es eine deutlich schwächere gibt
+  if(needOf(S.mission,p.bid,p.tricks)<=0&&wins[b]/n>=.85){
+    let alt=-1;cands.forEach((c,k)=>{if(wins[k]/n<=wins[b]/n-.3&&adj[k]>=adj[b]-.15*n&&(alt<0||adj[k]>adj[alt]))alt=k});
+    if(alt>=0)b=alt;
+  }
+  // Knappe Entscheidungen: Ziel offen halten, Hinterhand, verdeckte Karten aufheben
+  const EPS=.12*n,close=cands.map((c,k)=>k).filter(k=>adj[k]>=adj[b]-EPS);
+  if(close.length>1){
+    const need=needOf(S.mission,p.bid,p.tricks),rem=S.mission===36?S.total-S.played:p.hand.length,pos=S.trick.length;
+    let pick=b;
+    if(need>0&&need>=rem){pick=close.reduce((x,k)=>wins[k]>wins[x]?k:x,close[0])}
+    else{
+      const st=c=>isJ(c.card.c)?(c.value===(mode==="high"?56:0)?99:-1):strength(c.card.c,mode);
+      const maxSt=Math.max(...cands.map(st));
+      if(pos===1&&need>0&&need<rem&&st(cands[pick])===maxSt){const alt=close.filter(k=>st(cands[k])<maxSt);if(alt.length)pick=alt.reduce((x,k)=>adj[k]>adj[x]?k:x,alt[0])}
+      if(S.mission!==33&&p.hand.some(o=>!o.open)&&!cands[pick].card.open){const op=close.filter(k=>cands[k].card.open);if(op.length)pick=op.reduce((x,k)=>adj[k]>adj[x]?k:x,op[0])}
+    }
+    b=pick;
+  }
+  if(p.bid!=null){
+    const need=needOf(S.mission,p.bid,p.tricks),sv=c=>strength(c.value,mode);
+    // Ansage erfüllt und Ausspielen: schwache Karte statt hoher (hohe nur unter höheren anderer abwerfen)
+    if(S.trick.length===0&&need<=0){
+      const ok=cands.map((c,k)=>k).filter(k=>adj[k]>=adj[b]-.35*n);
+      const k2=ok.reduce((x,k)=>sv(cands[k])<sv(cands[x])?k:x,ok[0]);
+      if(k2!==undefined)b=k2;
+    }
+    // Ansage erfüllt: lieber die Karte, die am sichersten verliert, statt darauf zu hoffen, dass jemand drübergeht
+    if(need<=0){
+      const wr=k=>wins[k]/n,kmin=cands.map((c,k)=>k).reduce((x,k)=>wr(k)<wr(x)||(wr(k)===wr(x)&&adj[k]>adj[x])?k:x,0);
+      if(wr(b)-wr(kmin)>=.15&&adj[kmin]>=adj[b]-.5*n)b=kmin;
+    }
+    // Mittlere Karten: günstige Stichchance nutzen, statt auf eine bessere zu warten
+    if(S.trick.length>=1&&need>0&&need<(S.mission===36?S.total-S.played:p.hand.length)&&S.mission!==9){
+      const cur=Math.max(...S.trick.map(t=>strength(t.value,mode)));
+      const seenS=new Set([...p.hand.map(o=>o.c),...S.gone]),strong=p.hand.some(o=>isJ(o.c)||pWin(o.c,seenS,mode)>=.5);
+      if(!strong&&sv(cands[b])<=cur){
+        const winK=cands.map((c,k)=>k).filter(k=>sv(cands[k])>cur&&!isJ(cands[k].card.c));
+        if(winK.length){const k2=winK.reduce((x,k)=>sv(cands[k])>sv(cands[x])?k:x,winK[0]);if(adj[k2]>=adj[b]-.3*n)b=k2}
+      }
+    }
+    // Als Letzter: sicheren Stich nehmen, wenn er noch gebraucht wird
+    if(S.trick.length===2&&need>0){
+      const cur=Math.max(...S.trick.map(t=>strength(t.value,mode)));
+      if(sv(cands[b])<=cur){
+        const winK=cands.map((c,k)=>k).filter(k=>sv(cands[k])>cur);
+        const nj=winK.filter(k=>!isJ(cands[k].card.c)),pool=nj.length?nj:winK;
+        if(pool.length){const k2=pool.reduce((x,k)=>sv(cands[k])<sv(cands[x])?k:x,pool[0]);if(adj[k2]>=adj[b]-.2*n)b=k2}
+      }
+    }
+  }
+  S.lastEval={sim:cands.map((c,k)=>[isJ(c.card.c)?"J"+c.value:c.card.c,+(sums[k]/n).toFixed(2)])};
+  return cands[b];
+}
+
+function pWin(c,own,mode){
+  if(isJ(c))return .92;
+  const unknown=56-own.size;let lower=0;
+  for(let v=1;v<=55;v++)if(!own.has(v)&&(mode==="high"?v<c:v>c))lower++;
+  return Math.pow(lower/unknown,2);
+}
+function bidCap(i){
+  const p=S.players[i],m=S.mission;
+  const known=p.hand.filter(o=>!o.blind).map(o=>memVal(i,o)),own=new Set(known);
+  const pw=c=>{const h=pWin(c,own,"high"),l=pWin(c,own,"low");return m===9?l:(m===18||m===24)?Math.max(h,l):h};
+  const vals=known.map(pw).sort((a,b)=>b-a);
+  const giverF=g=>{const b=S.players[g].bid;if(b==null)return .33;return b<=S.total/4?.45:b>=S.total/2?.15:.3};
+  let e;
+  if(m===1||m===34||m===35){const x=S.card.x,g=(i-S.card.dir+3)%3;e=vals.slice(0,known.length-x).reduce((a,v)=>a+v,0)+x*giverF(g)}
+  else if(m===19){e=vals.slice(0,known.length-2).reduce((a,v)=>a+v,0)+giverF((i+2)%3)+giverF((i+1)%3)}
+  else if(m===2){e=S.total*giverF((i-S.card.dir+3)%3)}
+  else e=vals.reduce((a,v)=>a+v,0)+(S.total-known.length)/3;
+  return Math.max(1,Math.floor(e+1));
+}
+/* Untergrenze: fast sichere Stichkarten (z. B. 54, 55, Joker) lassen sich kaum loswerden */
+const FLOOR_SKIP=[1,2,6,9,17,18,19,20,22,23,24,25,27,30,34,35,36];
+function bidFloor(i){
+  if(FLOOR_SKIP.includes(S.mission))return 0;
+  const p=S.players[i],known=p.hand.filter(o=>!o.blind).map(o=>memVal(i,o)),own=new Set(known);
+  const sure=known.filter(c=>pWin(c,own,"high")>=.9).length;
+  return Math.min(S.total,sure+(S.mission===28?p.tricks:0));
+}
+// Regel 34/35: Plausibilitätsgrenze – nie alle Stiche, solange noch Karten wechseln; zusammen nicht weit über die Stichzahl
+function cap3435(i){
+  const md=globalThis.T_CAP||"a";if(md==="old")return S.total;if(md==="b")return bidCap(i);
+  const others=S.players.reduce((a,p,j)=>a+(j!==i&&p.bid!=null?p.bid:0),0);
+  return Math.min(S.total-1,Math.max(1,S.total-others+1));
+}
+function aiBid(i){
+  const f=forbiddenBid(),m=S.mission;
+  const lk=lockedBids(),cap=S.mission===36?S.total:(S.mission===34||S.mission===35)?cap3435(i):bidCap(i),floor=bidFloor(i);let opts=[];for(let b=0;b<=S.total;b++)if(!lk.has(b)&&b<=cap&&b>=floor)opts.push(b);
+  if(m===37)opts=[0,1];
+  if(!opts.length){for(let b=0;b<=S.total;b++)if(!lk.has(b)&&b<=cap)opts.push(b)}
+  if(!opts.length){for(let b=0;b<=S.total;b++)if(!lk.has(b))opts.push(b);opts=opts.slice(0,1)}
+  const ev=(w,b)=>{
+    const bids=S.players.map((p,j)=>j===i?b:p.bid!=null?p.bid:simpleBid(w.hands[j],m));
+    const H=w.hands;
+    if(m===20||m===6)H.forEach(h=>h.push(w.pool.pop()));
+    if(m===1||m===34||m===35){const g=H.map((h,j)=>giveAwayH(h,bids[j],S.total,S.card.x));
+      g.forEach((gg,j)=>gg.forEach(c=>H[j].splice(H[j].indexOf(c),1)));
+      g.forEach((gg,j)=>H[(j+S.card.dir)%3].push(...gg));}
+    if(m===2){const old=H.slice();old.forEach((h,j)=>{H[(j+S.card.dir)%3]=h});}
+    if(m===22||m===25)H.forEach(h=>h.push(...w.pool.splice(-3)));
+    if(m===19){const g=H.map((h,j)=>giveAwayH(h,bids[j],S.total,2));
+      g.forEach((gg,j)=>gg.forEach(c=>H[j].splice(H[j].indexOf(c),1)));
+      g.forEach((gg,j)=>{if(gg[0]!==undefined)H[(j+1)%3].push(gg[0]);if(gg[1]!==undefined)H[(j+2)%3].push(gg[1])});}
+    if(m===23)H.forEach((h,j)=>{giveAwayH(h,bids[j],S.total,2).forEach(c=>h.splice(h.indexOf(c),1));h.push(...w.pool.splice(-2))});
+    const st=m===28?baseState(w,{bids,leader:S.nextLead}):baseState(w,{bids,tricks:[0,0,0],bonus:[0,0,0],t:0,mode:m===9?"low":"high"});
+    runToEnd(st);return -(missOf(m,b,st.tricks[i])-st.bonus[i]);
+  };ev.who=i;
+  return bestOf(opts,Math.max(40,Math.floor(BUDGET/opts.length)),ev);
+}
+
+function aiDiscard(i){
+  const all=S.players[i].hand,nj=all.filter(o=>!isJ(o.c)),h=nj.length>=2?nj:all,cands=[];
+  for(let a=0;a<h.length;a++)for(let b=a+1;b<h.length;b++)cands.push([h[a],h[b]]);
+  const ev=(w,pair)=>{
+    const H=w.hands,bids=S.players.map(p=>p.bid);
+    pair.forEach(o=>H[i].splice(H[i].indexOf(o.c),1));
+    H.forEach((hh,j)=>{if(j!==i&&hh.length>S.total-2)giveAwayH(hh,bids[j],S.total,2).forEach(c=>hh.splice(hh.indexOf(c),1))});
+    H.forEach(hh=>{while(hh.length<S.total&&w.pool.length)hh.push(w.pool.pop())});
+    const st=baseState(w,{t:0});runToEnd(st);return scoreOf(st,i);
+  };ev.who=i;
+  return bestOf(cands,Math.max(30,Math.floor(BUDGET/cands.length)),ev);
+}
+
+function aiPass(i,dirs,leader){
+  const all=S.players[i].hand,nj=all.filter(o=>!isJ(o.c)),h=nj.length>=dirs.length?nj:all,cands=[];
+  if(dirs.every(d=>d===dirs[0])){
+    const k=dirs.length,rec=(start,acc)=>{if(acc.length===k){cands.push(acc);return}for(let q=start;q<h.length;q++)rec(q+1,acc.concat([h[q]]))};rec(0,[]);
+  } else h.forEach(a=>h.forEach(b=>{if(a!==b)cands.push([a,b])}));
+  if(cands.length===1)return cands[0];
+  // Regel 34/35 nach der Ansage: Wer viele Stiche braucht, behält seine oberen Karten
+  const me=S.players[i];
+  if((S.mission===34||S.mission===35)&&me.bid!=null&&!globalThis.T_OLDPASS){
+    const need=me.bid-me.tricks,rem=S.total-S.played;
+    if(need>0&&need*2>=rem){
+      const vv=o=>isJ(o.c)?99:o.c,top=new Set(all.slice().sort((a,b)=>vv(b)-vv(a)).slice(0,Math.min(need,all.length-dirs.length)));
+      const keep=cands.filter(c=>!c.some(o=>top.has(o)));if(keep.length){cands.length=0;cands.push(...keep)}
+      if(cands.length===1)return cands[0];
+    }
+  }
+  const ev=(w,pick)=>{
+    const H=w.hands,bids=S.players.map((p,j)=>p.bid??simpleBid(H[j],S.mission)),rem=S.total-S.played;
+    const give=H.map((hh,j)=>j===i?pick.map(o=>o.c):giveAwayH(hh,bids[j]-S.players[j].tricks,rem,dirs.length));
+    give.forEach((g,j)=>g.forEach(c=>{const k=H[j].indexOf(c);if(k>=0)H[j].splice(k,1)}));
+    give.forEach((g,j)=>dirs.forEach((d,k)=>{if(g[k]!==undefined)H[(j+d)%3].push(g[k])}));
+    if((S.mission===34||S.mission===35)&&S.players.some(p=>p.bid==null)){// zweites Weitergeben nach der Ansage mitdenken
+      const g2=H.map((hh,j)=>giveAwayH(hh,bids[j],S.total,2));g2.forEach((g,j)=>g.forEach(c=>{const k=H[j].indexOf(c);if(k>=0)H[j].splice(k,1)}));g2.forEach((g,j)=>H[(j+S.card.dir)%3].push(...g));}
+    const st=baseState(w,{leader,bids});runToEnd(st);return scoreOf(st,i);
+  };ev.who=i;
+  return bestOf(cands,Math.max(30,Math.floor(BUDGET/cands.length)),ev);
+}
+
+function aiSwapPartner(i){
+  const opts=[0,1,2].filter(q=>q!==i);
+  const ev=(w,q)=>{
+    const H=w.hands,rem=S.total-S.played;
+    const a=giveAwayH(H[i],S.players[i].bid-S.players[i].tricks,rem,1)[0],b=giveAwayH(H[q],S.players[q].bid-S.players[q].tricks,rem,1)[0];
+    if(a!==undefined&&b!==undefined){H[i].splice(H[i].indexOf(a),1);H[q].splice(H[q].indexOf(b),1);H[i].push(b);H[q].push(a)}
+    const st=baseState(w,{leader:i});runToEnd(st);return scoreOf(st,i);
+  };ev.who=i;
+  return bestOf(opts,600,ev);
+}
+function aiGift(i){
+  const opts=[-1,...[0,1,2].filter(q=>q!==i)];
+  const ev=(w,q)=>{const st=baseState(w,{leader:i});st.used=st.used.slice();
+    if(q>=0){st.tricks[i]--;st.tricks[q]++;st.used[i]=true}
+    runToEnd(st);return scoreOf(st,i)};ev.who=i;
+  return bestOf(opts,500,ev);
+}
+function aiAdjust(i,leader,ds){
+  const ev=(w,d)=>{const st=baseState(w,{leader});st.bids=st.bids.slice();st.bids[i]+=d;if(d!==0)st.bonus[i]-=1;
+    runToEnd(st);return scoreOf(st,i)};ev.who=i;
+  return bestOf(ds,600,ev);
+}
+function aiReveal(i){
+  const p=S.players[i],hid=p.hand.filter(o=>!o.open);
+  if(!hid.length)return null;
+  if(hid.length===1)return hid[0];
+  const ev=(w,o)=>{
+    const st=baseState(w,{leader:S.nextLeader33??i});
+    st.open[i].add(o.c);
+    for(let q=0;q<3;q++)if(q!==i){const hh=st.hands[q].filter(c=>!st.open[q].has(c));if(hh.length)st.open[q].add(revealH(hh,st.bids[q]-st.tricks[q],st.mode))}
+    runToEnd(st);return scoreOf(st,i)};ev.who=i;
+  return bestOf(hid,Math.max(40,Math.floor(BUDGET/hid.length)),ev);
+}
+function aiChooseMode(i){
+  const ev=(w,mode)=>{const st=baseState(w,{leader:i,mode});runToEnd(st);return scoreOf(st,i)};ev.who=i;
+  return bestOf(["high","low"],800,ev);
+}
+function aiChooseDir(i,leader){
+  // Richtung: beide durchspielen, Gegner geben nach Faustregel
+  const ev=(w,d)=>{
+    const H=w.hands,rem=S.total-S.played;
+    const give=H.map((hh,j)=>giveAwayH(hh,S.players[j].bid-S.players[j].tricks,rem,1));
+    give.forEach((g,j)=>g.forEach(c=>H[j].splice(H[j].indexOf(c),1)));
+    give.forEach((g,j)=>{if(g[0]!==undefined)H[(j+d)%3].push(g[0])});
+    const st=baseState(w,{leader});runToEnd(st);return scoreOf(st,i);
+  };ev.who=i;
+  return bestOf([1,2],600,ev);
+}
+
+/* ---------- Darstellung ---------- */
+function hue(v){return v<=28?220-(v-1)/27*165:55-(v-28)/27*55}
+function tint(el,v){const h=hue(v);el.style.background=`hsl(${h},82%,64%)`;el.style.borderColor=`hsl(${h},60%,42%)`}
+function cardEl(o,value,extra=""){
+  const d=document.createElement("div");
+  if(o.blind||o.hideSelf){d.className="card blind "+extra;d.textContent="?";return d}
+  if(isJ(o.c)){d.className="card joker "+extra;d.dataset.v="★";
+    d.innerHTML=value==null?"★":`<span class="jv">${value}</span><small>Joker</small>`;}
+  else{d.className="card "+extra;d.dataset.v=o.c;d.textContent=o.c;tint(d,o.c);}
+  const mk=markOf(o.c);if(mk){const b=document.createElement("span");b.className="mark "+mk.cls;b.textContent=mk.t;d.appendChild(b)}
+  if(o.got&&value==null&&o.mine&&!o.hideSelf){d.classList.add("got");const g=document.createElement("span");g.className="gotmark";g.textContent="neu";d.appendChild(g)}
+  if(o.open&&value==null&&o.mine){d.classList.add("open");const t=document.createElement("span");t.className="tag";t.textContent="👁 offen";d.appendChild(t)}
+  return d;
+}
+function pips(n){return `<span class="pips" aria-label="${n} von ${LIMIT} Pilis">${[...Array(LIMIT)].map((_,k)=>`<span class="pip ${k<n?"on":""}"></span>`).join("")}</span>`}
+const seen0=o=>o.open||o.blind;
+function markOf(c){
+  if(!S||isJ(c))return null;
+  if(S.mission===16&&S.card&&S.card.nums.includes(c))return {cls:"pen",t:"🌶️"};
+  if(S.mission===26&&c<=9)return {cls:"bon",t:"−1"};
+  return null;
+}
+function mini(o){
+  if(isJ(o.c))return `<span class="mini j">★</span>`;
+  const h=hue(o.c),mk=markOf(o.c);return `<span class="mini" style="background:hsl(${h},82%,64%);border-color:hsl(${h},60%,42%)">${o.c}${mk?`<i class="mmark ${mk.cls}"></i>`:""}</span>`;
+}
+function minis(hand){
+  const vis=hand.filter(seen0),hid=hand.filter(o=>!seen0(o));
+  return (vis.length?`<span class="grp">${vis.map(mini).join("")}</span>`:"")+(hid.length?`<span class="grp">${hid.map(()=>'<span class="mini back"></span>').join("")}</span>`:"");
+}
+
+function scoreBox(p){
+  return `<div class="score"><span class="big">${p.bid==null?"–":S.mission===37?(p.bid?"U":"G"):p.bid}<span class="sl">/</span>${p.tricks}</span><span class="lbl">Ansage / Stiche</span></div>`;
+}
+function bonusTag(p){return p.bonus>0?` <span class="minus">−${p.bonus}</span>`:p.bonus<0?` <span class="plus">+${-p.bonus}</span>`:""}
+function render(){
+  if(!S)return;
+  $("round").textContent=`Runde ${S.round}, ${S.total} Stiche`;
+  const mb=$("mission");
+  if(S.mission){mb.hidden=false;mb.innerHTML=`<b>Mission ${S.mission}</b> ${cardText(S.card)}${S.left!=null?` <span class="left">Noch ${S.left} im Stapel</span>`:""}`}else mb.hidden=true;
+  const md=$("mode");md.textContent=S.mode==="high"?"Höchste Karte gewinnt":"Niedrigste Karte gewinnt";md.className="mode"+(S.mode==="low"?" low":"");
+  $("seats").innerHTML=[1,2].map(i=>{const p=S.players[i];
+    return `<div class="seat ${S.turn===i?"active":""}">
+      <div class="name">${p.name} ${S.dealer===i?'<span class="dealer">beginnt</span>':""}</div>
+      ${scoreBox(p)}
+      <div class="stats">${pips(p.pilis)}${bonusTag(p)}</div>
+      <div class="minis">${minis(p.hand)}</div></div>`}).join("");
+  const me=S.players[0];
+  $("meName").innerHTML=`Du ${S.dealer===0?'<span class="dealer">beginnt</span>':""}`;
+  $("meStats").innerHTML=`${scoreBox(me)}<span class="pipwrap">${pips(me.pilis)}${bonusTag(me)}</span>`;
+
+  const lb=$("lastBox");
+  if(S.lastTrick){lb.hidden=false;lb.innerHTML=`<span class="lt-h">Letzter Stich</span><span class="lt-g">${trickView(S.lastTrick,S.lastWin,"lm")}</span>`}else lb.hidden=true;
+  const tr=$("trick");tr.innerHTML="";
+  [1,2,0].forEach(i=>{
+    const s=document.createElement("div");s.className="slot s"+i;
+    const k=S.trick.findIndex(x=>x.i===i);
+    if(k>=0){const t=S.trick[k];s.appendChild(cardEl({c:t.card.c},isJ(t.card.c)?t.value:null,"played"+(k===S.winIdx?" win":"")))}
+    else{const ph=document.createElement("div");ph.className="card ph";s.appendChild(ph)}
+    const l=document.createElement("span");l.textContent=S.players[i].name;s.appendChild(l);tr.appendChild(s)});
+
+  const ui=S.ui,ctl=$("controls");ctl.innerHTML="";
+  if(ui&&ui.kind==="bid"){
+    const lk=lockedBids();
+    const w=document.createElement("div");w.className="bids";
+    const locked=[...lk].sort((a,b)=>a-b);
+    const info=locked.length?` (${locked.join(" und ")} gesperrt)`:"";
+    const par=S.mission===37;
+    w.innerHTML=`<span class="label">${par?"Machst du gerade oder ungerade viele Stiche?":"Wie viele Stiche machst du?"+info}</span>`;
+    for(const b of par?[0,1]:[...Array(S.total+1).keys()]){const btn=document.createElement("button");btn.className="bid";btn.textContent=par?(b?"ungerade":"gerade"):b;if(par)btn.style.padding="0 1.4rem";
+      btn.disabled=lk.has(b);btn.onclick=()=>ui.resolve(b);w.appendChild(btn)}
+    ctl.appendChild(w);
+  } else if(ui&&ui.kind==="choice"){
+    const w=document.createElement("div");w.className="choices";
+    w.innerHTML=`<span class="label">${ui.prompt}</span>`;
+    ui.options.forEach(([l,v])=>{const b=document.createElement("button");b.className="choice";b.textContent=l;b.onclick=()=>ui.resolve(v);w.appendChild(b)});
+    ctl.appendChild(w);
+  } else {
+    const h=document.createElement("div");
+    if(ui&&ui.kind==="pick"){
+      h.className="pickbar";
+      const n=ui.sel.length;
+      h.innerHTML=`<span class="prompt">${ui.prompt}</span>`;
+      const b=document.createElement("button");b.className="primary pickok";b.disabled=n!==ui.count;
+      b.textContent=ui.count===1?(n?"Bestätigen":"Karte antippen …"):`Bestätigen (${n} von ${ui.count} gewählt)`;
+      b.onclick=()=>{if(ui.sel.length===ui.count)ui.resolve(ui.sel.slice())};h.appendChild(b);
+    }
+    else if(ui&&ui.kind==="select"){h.className="prompt";h.textContent=ui.prompt}
+    else{h.className="hint";h.textContent=ui&&ui.kind==="play"?(S.mission===15?"Spiel deine höchste oder niedrigste Karte (oder den Joker).":S.hideMine?"Tippe eine verdeckte Karte an.":"Tippe eine Karte an, um sie zu spielen."):"Warte auf die anderen …"}
+    ctl.appendChild(h);
+  }
+
+  const active=ui&&(ui.kind==="play"||ui.kind==="select"||ui.kind==="pick");
+  const allowed=ui&&ui.kind==="play"?new Set(legalHand(me.hand)):ui&&ui.only?ui.only:new Set(me.hand);
+  const hand=$("hand");hand.innerHTML="";hand.classList.toggle("playable",!!active);
+  me.hand.forEach(o=>{const el=cardEl({...o,mine:true,hideSelf:S.hideMine});
+    if(ui&&ui.kind==="pick"){const k=ui.sel.indexOf(o);if(k>=0){el.classList.add("sel");const t=document.createElement("span");t.className="seltag";t.textContent=ui.labels?ui.labels[k]||"✓":"✓";el.appendChild(t)}}
+    if(active&&!o.blind&&allowed.has(o)){el.tabIndex=0;el.setAttribute("role","button");
+      el.setAttribute("aria-label",S.hideMine?"Verdeckte Karte":isJ(o.c)?"Joker":`Karte ${o.c}`);
+      const go=()=>handTap(o);el.onclick=go;el.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}}}
+    else if(active)el.classList.add("off");
+    hand.appendChild(el)});
+}
+
+function handTap(o){
+  const ui=S.ui;if(!ui)return;
+  if(ui.kind==="select"){ui.resolve(o);return}
+  if(ui.kind==="pick"){const k=ui.sel.indexOf(o);if(k>=0)ui.sel.splice(k,1);else if(ui.sel.length<ui.count)ui.sel.push(o);render();return}
+  if(ui.kind==="play"){
+    if(isJ(o.c)){S.jokerCard=o;$("jv").value="";jvSync();$("jokerBox").hidden=false;return}
+    ui.resolve({card:o,value:o.c});
+  }
+}
+function jvSync(){const t=$("jv").value.trim(),v=+t,ok=t!==""&&!isNaN(v)&&v>=0&&v<=56;
+  $("jokerOk").disabled=!ok;$("jokerOk").textContent=ok?`Joker als ${Math.round(v)} spielen`:"Wert wählen …";
+  document.querySelectorAll("[data-jv]").forEach(b=>b.classList.toggle("on",ok&&Math.round(v)===+b.dataset.jv))}
+document.querySelectorAll("[data-jv]").forEach(b=>b.onclick=()=>{$("jv").value=b.dataset.jv;jvSync()});
+$("jv").oninput=jvSync;
+$("jokerOk").onclick=()=>{const t=$("jv").value.trim();if(t==="")return;let v=Math.round(+t);if(isNaN(v))return;v=Math.max(0,Math.min(56,v));
+  $("jokerBox").hidden=true;if(S.ui&&S.ui.kind==="play")S.ui.resolve({card:S.jokerCard,value:v})};
+$("jokerCancel").onclick=()=>{$("jokerBox").hidden=true};
+$("go").onclick=newGame;
+$("statsBtn").onclick=showStats;
+$("logBtn").onclick=copyProtocol;
+$("logBtn2").onclick=copyProtocol;
+$("flagBtn").onclick=flagMove;
+$("lastBox").onclick=()=>{if(!S||!S.lastTrick)return;$("lastPanel").innerHTML=`<h2>Letzter Stich</h2><div class="lt-g big">${trickView(S.lastTrick,S.lastWin,"lb")}</div><button class="primary" id="lastOk">Schließen</button>`;$("lastOv").hidden=false;$("lastOk").onclick=()=>{$("lastOv").hidden=true}};
+</script>
+<script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));</script>
+</body>
+</html>

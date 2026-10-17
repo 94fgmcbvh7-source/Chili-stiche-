@@ -1,0 +1,20 @@
+Chili-Stiche als Offline-App auf dem iPad (über GitHub Pages, kostenlos)
+
+1. Konto: Auf github.com ein kostenloses Konto anlegen (z. B. Benutzername "maxmuster").
+2. Neues Projekt: Oben rechts "+" > "New repository".
+   Name: chili-stiche   |   Sichtbarkeit: Public   |   "Create repository".
+3. Dateien hochladen: Im neuen Projekt auf "uploading an existing file" tippen
+   und diese 6 Dateien auswählen (die ZIP vorher in der Dateien-App antippen, dann wird sie entpackt):
+   index.html, sw.js, manifest.webmanifest, icon-192.png, icon-512.png, apple-touch-icon.png
+   Unten "Commit changes".
+4. Webseite einschalten: "Settings" > links "Pages" > bei "Branch" "main" und "/ (root)" wählen > "Save".
+   Nach 1–2 Minuten steht oben die Adresse, z. B. https://maxmuster.github.io/chili-stiche/
+5. Auf den Home-Bildschirm: Die Adresse in Safari öffnen, kurz warten, bis das Spiel geladen ist,
+   dann Teilen-Symbol > "Zum Home-Bildschirm".
+6. Fertig: Ab jetzt startet das Spiel über das Symbol auch ohne Internet.
+
+Updates: Neue index.html (bekommst du von Claude) im Projekt über "Add file" > "Upload files" hochladen
+und "Commit changes". Beim nächsten Öffnen mit Internet holt sich die App die neue Version.
+
+Hinweis: Die Jahreswertung wird nur auf dem jeweiligen Gerät gespeichert (wie bei der Gastversion)
+und ist getrennt von der Wertung in der Claude-Version.
